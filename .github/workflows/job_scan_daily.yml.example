@@ -1,0 +1,178 @@
+# The MIT License (MIT)
+# Copyright (c) 2025 Jozef Darida
+# JobLens Automation Project - Public Example Workflow
+
+name: JobLens Daily Scan (Example)
+
+on:
+  schedule:
+    # Schedule: runs at 10:00 UTC every 2nd day of the month.
+    # Set to '0 10 * * *' for daily run at 10:00 UTC
+    - cron: '0 10 */2 * *'
+  
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ===========================================================================
+  # PHASE 1: INDIVIDUAL PROVIDER SCRAPING (MATRIX)
+  # ===========================================================================
+  # This section runs the actual scraping processes.
+  # Modify 'provider' list to enable/disable specific job portals.
+  # ===========================================================================
+  scrape:
+    name: Scrape ${{ matrix.provider }}
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1 # Sequential execution is recommended for anti-bot safety
+      matrix:
+        # Configuration for the external user: Select your desired providers here.
+        provider: [linkedin, solcom]
+    
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Google Chrome (Required for Selenium providers)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install Project Dependencies
+        run: |
+          pip install .
+          pip install undetected-chromedriver selenium webdriver-manager pandas openpyxl setuptools
+
+      - name: Run JobLens Scraper
+        # The '-pr' flag forces the provider defined in the matrix
+        run: python jobLens.py -pr ${{ matrix.provider }}
+        continue-on-error: true
+
+      - name: Ensure directories exist for artifact upload
+        run: |
+          mkdir -p results outputs
+          touch results/.gitkeep outputs/.gitkeep
+
+      - name: Upload Temporary Results (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.provider }}
+          path: |
+            results/
+            outputs/
+          retention-days: 1
+          if-no-files-found: warn
+
+  # ===========================================================================
+  # PHASE 2: DATA CONSOLIDATION & COMMIT
+  # ===========================================================================
+  # This job merges all results and commits them to the 'data' branch.
+  # ===========================================================================
+  finalize:
+    name: Finalize and Commit Results
+    needs: scrape
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Main Branch (Code)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python for Sync
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Project Dependencies
+        run: |
+          pip install .
+          pip install pandas openpyxl
+
+      - name: Restore Previous Data from DATA Branch
+        # Fetching previous data is required to append new results to existing history
+        run: |
+          git fetch origin data
+          git checkout origin/data -- results/ outputs/ || echo "Starting with empty history."
+        continue-on-error: true
+
+      - name: Download and Merge Scraper Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: temp_artifacts
+          pattern: results-*
+          merge-multiple: true
+
+      - name: Consolidate Artifacts into Project Structure
+        run: |
+          mkdir -p results outputs
+          if [ -d "temp_artifacts/results" ]; then cp -r temp_artifacts/results/* results/ || true; fi
+          if [ -d "temp_artifacts/outputs" ]; then cp -r temp_artifacts/outputs/* outputs/ || true; fi
+
+      - name: Run Maintenance & Excel Dashboard Generation
+        run: python sync_results.py
+
+      - name: Push to DATA Branch (Internal Commit)
+        run: |
+          git config --global user.name "jobLens-Bot"
+          git config --global user.email "bot@joblens.local"
+          
+          # Prepare final data in a safe location
+          mkdir -p /tmp/joblens_final
+          cp -r results /tmp/joblens_final/
+          cp -r outputs /tmp/joblens_final/
+          
+          # This push ensures the main repository has an updated 'data' branch for results
+          git checkout data || git checkout -b data
+          find . -maxdepth 1 ! -name '.git' ! -name '.' -exec rm -rf {} +
+          cp -r /tmp/joblens_final/* .
+          
+          git add -f results/ outputs/
+          git commit -m "Auto-update: Internal sync $(date +'%Y-%m-%d')" || exit 0
+          git push origin data --force
+
+# ===========================================================================
+# !!! OPTIONAL: PUBLIC REPO PUSH INSTRUCTIONS !!!
+# ===========================================================================
+# If you want to push results to a *separate, public* repository, uncomment 
+# and adapt the following block.
+#
+# The user must first set a Repository Secret named 'EXTERNAL_REPO_TOKEN' 
+# containing a Personal Access Token with 'repo' scope.
+#
+#      - name: External Push to Public Repo (OPTIONAL)
+#        env:
+#          EXT_TOKEN: ${{ secrets.EXTERNAL_REPO_TOKEN }}
+#          EXT_REPO: "github.com/YourUsername/YourPublicRepo.git" # <-- UPDATE THIS
+#        run: |
+#          if [ -n "$EXT_TOKEN" ]; then
+#            git config --global user.name "jobLens-Bot"
+#            git config --global user.email "bot@joblens.local"
+#            
+#            # 1. Clone public repo
+#            git clone "https://${EXT_TOKEN}@${EXT_REPO}" /tmp/public_repo_sync
+#            cd /tmp/public_repo_sync
+#            
+#            # 2. Checkout the data branch (or main, depending on user setup)
+#            git checkout data || git checkout -b data
+#            
+#            # 3. Copy data to staging area
+#            cp -r /tmp/joblens_final/* .
+#            
+#            # 4. Commit and Push
+#            git add .
+#            git commit -m "Auto-update: Public data release $(date +'%Y-%m-%d')" || exit 0
+#            git push origin data
+#          fi
+# ===========================================================================
+
+# End of job_scan_daily.yml.example (v. 00001)

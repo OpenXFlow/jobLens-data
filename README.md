@@ -1,83 +1,113 @@
-# 📊 jobLens Public Data Release
+# jobLens: Intelligent Job Search Automation Engine
 
-This repository contains daily updated, analyzed, and scored job listings for **Senior Firmware, Testing, and AI/ML Engineering roles**. 
-The data is aggregated from multiple European job portals (LinkedIn, Solcom, Hays, etc.) by the private **jobLens Intelligence Engine**.
+<p align="center">
+  <pre>
+      _       _    _                      
+     (_) ___ | |__| |    ___ _ __  ___    
+     | |/ _ \| '_ \ |   / _ \ '_ \/ __|   
+     | | (_) | |_) | |__|  __/ | | \__ \   
+    _/ |\___/|_.__/|_____\___|_| |_|___/   
+   |__/                                    
+  </pre>
+</p>
+
+<p align="left">
+  <strong>Aggregate, analyze, and rank job postings from multiple providers simultaneously.</strong>
+  <br>
+  jobLens is a high-performance automation tool designed to give you a unified edge in the job market.
+  <br>
+  jobLens is Your Personal Career Intelligence Engine.
+</p>
+
+This repository is a powerful framework for automated recruitment research. Use it to scan major job portals (LinkedIn, Hays, SOLCOM) in parallel, bypass advanced bot protections, and receive a curated, scored list of opportunities that perfectly match your professional profile.
 
 ---
 
-## ✨ Data Structure
+## 🧭 Repository Navigation (Dual Branch Architecture)
 
-This repository is maintained by an automated Continuous Integration (CI) process. It contains two main directories for data persistence:
+**This repository stores the source code and configuration for the jobLens Agent.** Its results are published to a separate repository for public access.
 
-### 1. `results/` (The Final Database)
-This is the long-term, cumulative database of all unique job findings.
-
-| File Name | Format | Purpose |
+| Branch | Primary Content | Purpose |
 | :--- | :--- | :--- |
-| `all_found_jobs.csv` | CSV | **Master Database.** All unique jobs found since the start of the project. Used for historical analysis. |
-| `JobLens_Dashboard.xlsx` | Excel | **Primary Dashboard.** Multi-tab report (one sheet per provider), with all jobs sorted by Relevance Score. |
-| `history/` | CSV/XLSX | Archived job records older than 180 days. |
+| **`main`** | **Open-Source Code** (`.github`, `configs`, `src`,`docs`, ...)  | Provides a view of the code structure and tools for local data processing. |
+| **`data`** | **Data Backup** (`outputs/`, `results/`) | **CI/CD Target.** Stores the complete history and backup of all scraped data. |
 
-### 2. `outputs/` (Latest Scan Artifacts)
-This directory contains the full, unfiltered output and logs from the automated market scans.
-
-***Note:*** *The output directories are subject to a **14-day rolling window** cleanup, meaning folders older than 14 days are automatically deleted.*
-
-| File Name | Format | Purpose |
-| :--- | :--- | :--- |
-| `job_search_results.csv` | CSV | Filtered, scored results from the *latest run*. Contains only jobs passing the minimum relevance score threshold. |
-| `all_jobs_raw.json` | JSON | Unfiltered list of all jobs found in the latest scan (used internally for data synchronization). |
-| `job_search_results.md` | Markdown | Console-ready report summarizing the top N jobs found, including direct links. |
-| `debug_*.png/html` | PNG/HTML | Diagnostic screenshots/HTML dumps from Selenium providers (only if a scraping error occurred). |
+***Note: All public-facing data (CSV, Excel) is pushed from here to the [jobLens Public Data Repo](https://github.com/OpenXFlow/jobLens-data).***
 
 ---
 
-## 🛠 Helper Scripts (for Manual Filtering)
+### ✨ Key Features
 
-The `/helper` directory contains Python scripts for users who want to run custom, deep-dive filtering on the raw output data from the `/outputs` folder.
+-   🚀 **Multi-Provider Architecture:** Built on a modular **Provider Pattern**, supporting LinkedIn (API), SOLCOM, GULP, and others (Selenium).
+-   ⚡ **Parallel Execution:** High-speed multithreaded engine for simultaneous searching and data enrichment across all platforms.
+-   🛡️ **Advanced Bot Protection:** Integrated **Ultra-Stealth** patches and `undetected-chromedriver` to bypass WAF and Headless detections.
+-   🧠 **Relevance Scoring:** Automated skill matching, gap analysis (Missing Skills), and ranking based on your personalized CV profile.
+-   📊 **Professional Dashboards:** Global deduplication with exports to cumulative CSV databases and multi-tab **Excel Dashboards**.
+-   🤖 **CI/CD Ready:** Optimized for serverless execution via **GitHub Actions** for periodic, fully automated market scans.
 
-***Note:*** *Both scripts are **rekurzívne**—prehľadávajú zadaný adresár a **všetky jeho podadresáre** na nájdenie súborov `all_jobs_raw.csv`.*
+### 🛠️ Tech Stack & Powered By
 
-### 1. Filter by Testing/QA Role (`filter_jobs_for_test.py`)
-This script isolates jobs based on keywords found exclusively in the job title (e.g., Tester, QA, Automation).
+**Core Logic:**
+-   **Python 3.12+:** High-performance core with full type-hinting.
+-   **Concurrent Futures:** ThreadPool implementation for parallel I/O.
+-   **Pandas / OpenPyXL:** Data processing, consolidation, and Excel dashboard generation.
 
-*   **Action:** Scans all `all_jobs_raw.csv` files recursively and filters by job title.
-*   **Usage (Command Line):**
+**Stealth & Scraping:**
+-   **Selenium / Undetected-ChromeDriver:** Automated browser for protected portals.
+-   **BeautifulSoup4 / Requests:** Fast data extraction for APIs and static HTML.
+
+**Quality & DevTools:**
+-   **Ruff / MyPy:** Cutting-edge linting and static type checking for code quality enforcement.
+
+---
+
+### 🚀 Quick Start for Developers
+
+1.  **Clone the Repository:**
     ```bash
-    python helper/filter_jobs_for_test.py C:/path/to/jobLens-data/outputs/
+    git clone https://github.com/OpenXFlow/jobLens.git
+    cd jobLens
     ```
-    *Example:* `python helper/filter_jobs_for_test.py C:\Users\YourName\jobLens-data\outputs\`
 
-### 2. Filter by City/Region (`filter_jobs_for_city.py`)
-This script isolates jobs based on specific city keywords found anywhere in the job record.
+2.  **Set up the Environment:**
+    *   Create a virtual environment: `python -m venv .venv`
+    *   Activate it: `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (Linux)
+    *   Install dependencies: `pip install .`
 
-*   **Action:** Scans all `all_jobs_raw.csv` files recursively and filters by full row content (e.g., searches for "Vienna" or "Munich").
-*   **Usage (Command Line):**
-    ```bash
-    python helper/filter_jobs_for_city.py C:/path/to/jobLens-data/outputs/
-    ```
-    *Example:* `python helper/filter_jobs_for_city.py C:\Users\YourName\jobLens-data\outputs\`
+3.  **Initialize the "Brain":**
+    *   Run the wizard to create directories and local configs:
+        ```bash
+        python -m src.utils.wizard
+        ```
+    *   **Configure Your Profile:** Edit `configs/my_profile/my_profile.json` with your specific skills and target roles.
 
-***Note:*** *Both scripts generate a new, deduplicated CSV file in the `/helper` directory.*
+4.  **Run Your First Search:**
+    *   Standard search (all active providers):
+        ```bash
+        python jobLens.py
+        ```
+    *   Targeted search on a specific portal:
+        ```bash
+        python jobLens.py -pr solcom -sp remote_ai_only
+        ```
+
+5.  **Global Sync & Dashboard:**
+    *   Merge results from all runs into your global database:
+        ```bash
+        python sync_results.py
+        ```
 
 ---
 
-## ⚙️ How It Works
-The jobLens Engine runs on a daily schedule, executing the following steps:
-1.  **Scraping:** Fetches data from all configured job portals (LinkedIn, Solcom, etc.).
-2.  **Scoring:** Compares job descriptions against a detailed personal profile (skills, experience).
-3.  **Consolidation:** Runs `sync_results.py` to deduplicate, archive old records, and update the master database.
-4.  **Publishing:** Pushes the updated data to this public repository.
+## 🔗 Public Data & Helper Tools
 
-## 🔗 Repository Links
-- **Source Code (Private):** [jobLens Engine](https://github.com/OpenXFlow/jobLens)
-- **Data Branch URL:** [View Raw Data](https://github.com/OpenXFlow/jobLens-data/tree/data)
+The publicly available results and helper scripts are located in the separate repository:
 
-## 🌍 Region Coverage
-- Germany (DE)
-- Austria (AT)
-- Switzerland (CH)
-- Remote / International Markets (USA, UK, CEE)
+| Content | Location |
+| :--- | :--- |
+| **Live Data / Results** | [jobLens Public Data Repo](https://github.com/OpenXFlow/jobLens-data) |
+| **Example CI Workflow** | **job_scan_daily.yml.example** (in this repo) |
 
----
-*Maintained by the private jobLens Engine, Copyright (c) 2025 Jozef Darida. Last updated: Automated Daily.*
+## license
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
