@@ -2,10 +2,7 @@
 
 
 <p align="center">
-  <video width="600" autoplay loop muted playsinline poster="docs/assets/image/jobLens.jpg">
-    <source src="https://github.com/OpenXFlow/jobLens-data/raw/main/docs/assets/image/jobLens.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <img src="docs/assets/image/jobLens.gif" alt="jobLens Logo" width="600">
 </p>
 
 <p align="left">
