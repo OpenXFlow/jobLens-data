@@ -5,6 +5,19 @@ The data is aggregated from multiple European job portals (LinkedIn, Solcom, Hay
 
 ---
 
+## 🧭 Repository Navigation (Dual Branch Architecture)
+
+This repository uses two separate branches for maximum transparency:
+
+| Branch | Primary Content | Purpose |
+| :--- | :--- | :--- |
+| [main](https://github.com/OpenXFlow/jobLens-data/tree/main)  | **Open-Source Code** (`.github`, `configs`, `src`,`docs`, ...)  | Provides a view of the code structure and tools for local data processing. |
+| [data](https://github.com/OpenXFlow/jobLens-data/tree/data)  | **Data Backup** (`outputs/`, `results/`) | **CI/CD Target.** Stores the complete history and backup of all scraped data. |
+
+***Recommendation: To view the latest job results / sources, switch the branch to **`data / main `** in the top-left menu.***
+
+---
+
 ## ✨ Data Structure
 
 This repository is maintained by an automated Continuous Integration (CI) process. It contains two main directories for data persistence:
@@ -36,7 +49,7 @@ This directory contains the full, unfiltered output and logs from the automated 
 
 The `/helper` directory contains Python scripts for users who want to run custom, deep-dive filtering on the raw output data from the `/outputs` folder.
 
-***Note:*** *Both scripts are **rekurzívne**—prehľadávajú zadaný adresár a **všetky jeho podadresáre** na nájdenie súborov `all_jobs_raw.csv`.*
+***Note:*** *Both scripts are **recursive**—they scan the specified directory and **all its subdirectories** to find `all_jobs_raw.csv` files.*
 
 ### 1. Filter by Testing/QA Role (`filter_jobs_for_test.py`)
 This script isolates jobs based on keywords found exclusively in the job title (e.g., Tester, QA, Automation).
@@ -70,8 +83,8 @@ The jobLens Engine runs on a daily schedule, executing the following steps:
 4.  **Publishing:** Pushes the updated data to this public repository.
 
 ## 🔗 Repository Links
-- **Source Code (Private):** [jobLens Engine](https://github.com/OpenXFlow/jobLens)
-- **Data Branch URL:** [View Raw Data](https://github.com/OpenXFlow/jobLens-data/tree/data)
+- **Source Code (Engine View):**  switch to Branch 'main'
+- **Data Branch URL:** [View Raw Data](https://github.com/OpenXFlow/jobLens-data/tree/data/results)
 
 ## 🌍 Region Coverage
 - Germany (DE)
@@ -81,3 +94,4 @@ The jobLens Engine runs on a daily schedule, executing the following steps:
 
 ---
 *Maintained by the private jobLens Engine, Copyright (c) 2025 Jozef Darida. Last updated: Automated Daily.*
+
