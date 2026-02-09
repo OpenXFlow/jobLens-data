@@ -1,14 +1,11 @@
 # jobLens: Intelligent Job Search Automation Engine
 
+
 <p align="center">
-  <pre>
-      _       _    _                      
-     (_) ___ | |__| |    ___ _ __  ___    
-     | |/ _ \| '_ \ |   / _ \ '_ \/ __|   
-     | | (_) | |_) | |__|  __/ | | \__ \   
-    _/ |\___/|_.__/|_____\___|_| |_|___/   
-   |__/                                    
-  </pre>
+  <video width="600" autoplay loop muted playsinline poster="docs/assets/image/jobLens.jpg">
+    <source src="https://github.com/OpenXFlow/jobLens-data/raw/main/docs/assets/image/jobLens.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
 </p>
 
 <p align="left">
@@ -19,7 +16,7 @@
   jobLens is Your Personal Career Intelligence Engine.
 </p>
 
-This repository is a powerful framework for automated recruitment research. Use it to scan major job portals (LinkedIn, Hays, SOLCOM) in parallel, bypass advanced bot protections, and receive a curated, scored list of opportunities that perfectly match your professional profile.
+This repository is a powerful framework for automated recruitment research. Use it to scan major job portals (LinkedIn, Solcom, Gulp, etc.) in parallel, bypass advanced bot protections, and receive a curated, scored list of opportunities that perfectly match your professional profile.
 
 ---
 
@@ -29,10 +26,10 @@ This repository is a powerful framework for automated recruitment research. Use 
 
 | Branch | Primary Content | Purpose |
 | :--- | :--- | :--- |
-| **`main`** | **Open-Source Code** (`.github`, `configs`, `src`,`docs`, ...)  | Provides a view of the code structure and tools for local data processing. |
-| **`data`** | **Data Backup** (`outputs/`, `results/`) | **CI/CD Target.** Stores the complete history and backup of all scraped data. |
+| [main](https://github.com/OpenXFlow/jobLens-data/tree/main)  | **Open-Source Code** (`.github`, `configs`, `src`, `docs`, ...)  | Provides a view of the code structure and tools for local data processing. |
+| [data](https://github.com/OpenXFlow/jobLens-data/tree/data)  | **Data Backup** (`outputs/`, `results/`) | **CI/CD Target.** Stores the complete history and backup of all scraped data. |
 
-***Note: All public-facing data (CSV, Excel) is pushed from here to the [jobLens Public Data Repo](https://github.com/OpenXFlow/jobLens-data).***
+***Note: All public-facing data (CSV, Excel) is pushed from here to the [jobLens Public Data Repo](https://github.com/OpenXFlow/jobLens-data/tree/data).***
 
 ---
 
@@ -105,7 +102,7 @@ The publicly available results and helper scripts are located in the separate re
 
 | Content | Location |
 | :--- | :--- |
-| **Live Data / Results** | [jobLens Public Data Repo](https://github.com/OpenXFlow/jobLens-data) |
+| **Live Data / Results** | [jobLens Public Data Repo](https://github.com/OpenXFlow/jobLens-data/tree/data) |
 | **Example CI Workflow** | **job_scan_daily.yml.example** (in this repo) |
 
 ## license

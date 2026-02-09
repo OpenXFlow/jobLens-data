@@ -1,0 +1,75 @@
+{
+  "personal_info": {
+    "name": "Your Full Name",
+    "title": "Your Professional Title (e.g., Senior Software Engineer)",
+    "education": "Your Degree (e.g., Dipl. Ing.)",
+    "location": "City, Country",
+    "languages": ["English", "German"],
+    "github": "https://github.com/your-username",
+    "linkedin": "https://www.linkedin.com/in/your-profile"
+  },
+  "credentials": {
+    "freelance_de_user": "your_email@example.com",
+    "freelance_de_pass": "your_secure_password"
+  },
+  "skills": {
+    "roles": [
+      "Senior",
+      "Lead",
+      "Principal",
+      "Architect",
+      "Expert",
+      "Freelancer",
+      "Consultant"
+    ],
+    "programming": [
+      "Python", "C", "C++", "Rust", "Go", "Java", "Bash"
+    ],
+    "testing": [
+      "Pytest", "Unit Testing", "Integration Testing", "System Testing",
+      "Test Automation", "HIL", "SIL", "CI/CD", "Robot Framework", "Selenium"
+    ],
+    "embedded": [
+      "ARM", "Cortex-M", "DSP", "Firmware", "Embedded Systems", "RTOS",
+      "Microcontroller", "Driver Development", "CAN", "SPI", "I2C"
+    ],
+    "domains": [
+      "Automotive", "Semiconductors", "IoT", "Telecommunications"
+    ],
+    "ai_ml": [
+      "LLM", "RAG", "Generative AI", "Prompt Engineering",
+      "LangChain", "LlamaIndex", "NLP"
+    ],
+    "ai_tools": [
+      "ChatGPT", "Claude", "Cursor", "GitHub Copilot"
+    ],
+    "tools": [
+      "Git", "Jira", "Confluence", "Docker", "Kubernetes", "VS Code"
+    ],
+    "protocols": [
+      "TCP/IP", "MQTT", "REST API", "gRPC"
+    ],
+    "methodologies": [
+      "Agile", "Scrum", "TDD", "BDD"
+    ]
+  },
+  "open_source_projects": [
+    {
+      "name": "Project Name",
+      "description": "Brief description of the tool or platform",
+      "technologies": ["Python", "API", "Library"]
+    }
+  ],
+  "known_companies": [
+    "Example Company A",
+    "Example Company B"
+  ],
+  "preferences": {
+    "work_location_preference": ["Remote", "Hybrid"],
+    "employment_preference": ["Freelance", "Contract", "Full-time"],
+    "desired_locations": ["Germany", "Austria", "Remote"],
+    "min_salary": 5000,
+    "min_hourly_rate": 50,
+    "currency": "EUR"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "version": "2.1.0",
+  "profile_name": "Local Bratislava Positions",
+  "description": "On-site and hybrid jobs in Bratislava and Slovakia",
+  
+  "active_providers": {
+    "linkedin": { 
+      "enabled": true, 
+      "max_results": 40,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Bratislava", "Slovakia"],
+    "max_results_per_query": 40,
+    "posted_within_days": 30,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Software Engineer Bratislava",
+    "Test Engineer Slovakia",
+    "Python Developer Bratislava",
+    "QA Engineer Slovakia",
+    "Firmware Engineer Bratislava",
+    "DevOps Engineer Slovakia",
+    "Senior Engineer Bratislava",
+    "AI Engineer Slovakia"
+  ],
+  
+  "work_preferences": {
+    "work_location_types": ["On-site", "Hybrid"],
+    "employment_types": ["Full-time", "Contract"],
+    "exclude_types": ["Internship"]
+  },
+  
+  "language_requirements": {
+    "required": ["English"],
+    "preferred": ["Slovak", "German"],
+    "exclude": []
+  },
+  
+  "scoring_weights": {
+    "programming_languages": 20,
+    "testing_skills": 20,
+    "embedded_firmware": 15,
+    "domain_expertise": 10,
+    "ai_ml_skills": 20,
+    "known_companies": 10,
+    "seniority_level": 5
+  },
+  
+  "filtering": {
+    "min_relevance_score": 50,
+    "exclude_keywords": ["junior", "intern"],
+    "required_keywords": [],
+    "salary_min": null,
+    "exclude_companies": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "add_timestamp": true,
+    "base_filename": "bratislava_local_jobs",
+    "separate_files_by_type": false
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 30,
+    "show_statistics": true
+  },
+  
+  "api_settings": {
+    "delay_between_requests": 2,
+    "max_retries": 3,
+    "timeout": 30
+  }
+}

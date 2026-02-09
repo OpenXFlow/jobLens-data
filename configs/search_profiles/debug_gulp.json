@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "profile_name": "Debug GULP - Integration Test",
+  "description": "Testing GULP provider connectivity, list parsing, and detail extraction.",
+  
+  "active_providers": {
+    "gulp": { 
+      "enabled": true, 
+      "max_results": 5,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Germany"],
+    "max_results_per_query": 5,
+    "posted_within_days": 30,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Python"
+  ],
+  
+  "scoring_weights": {
+    "programming_languages": 20,
+    "seniority_level": 10
+  },
+  
+  "filtering": {
+    "min_relevance_score": 0,
+    "exclude_keywords": [],
+    "required_keywords": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "base_filename": "debug_gulp_results",
+    "add_timestamp": true
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 5,
+    "show_statistics": true
+  },
+
+  "debug": {
+    "verbose": true,
+    "log_to_file": true
+  }
+}

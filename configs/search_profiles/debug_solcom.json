@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "profile_name": "Debug SOLCOM",
+  "description": "Debugging Solcom connectivity and parsing",
+  
+  "active_providers": {
+    "solcom": { 
+      "enabled": true, 
+      "max_results": 5,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Deutschland"],
+    "max_results_per_query": 5,
+    "posted_within_days": 60,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Java"
+  ],
+  
+  "scoring_weights": {
+    "programming_languages": 10
+  },
+  
+  "filtering": {
+    "min_relevance_score": 0,
+    "exclude_keywords": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv"]
+  }
+}

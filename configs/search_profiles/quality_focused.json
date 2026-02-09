@@ -1,0 +1,105 @@
+{
+  "version": "2.1.0",
+  "profile_name": "Quality Focused - Premium Positions Only",
+  "description": "Only the best matches - high salary, top companies, perfect fit",
+  
+  "active_providers": {
+    "linkedin": { 
+      "enabled": true, 
+      "max_results": 15,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Remote", "Switzerland", "Germany", "Austria"],
+    "max_results_per_query": 15,
+    "posted_within_days": 14,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Senior Software Architect",
+    "Principal Engineer",
+    "Staff Engineer",
+    "Lead AI Engineer",
+    "Senior ML Engineer",
+    "Lead Test Architect",
+    "Principal Software Engineer",
+    "Staff AI Engineer"
+  ],
+  
+  "work_preferences": {
+    "work_location_types": ["Remote", "Hybrid"],
+    "employment_types": ["Full-time"],
+    "exclude_types": ["Internship", "Part-time", "Contract"]
+  },
+  
+  "language_requirements": {
+    "required": ["English"],
+    "preferred": ["German"],
+    "exclude": []
+  },
+  
+  "scoring_weights": {
+    "programming_languages": 20,
+    "testing_skills": 15,
+    "embedded_firmware": 10,
+    "domain_expertise": 10,
+    "ai_ml_skills": 25,
+    "known_companies": 15,
+    "seniority_level": 5
+  },
+  
+  "filtering": {
+    "min_relevance_score": 75,
+    "exclude_keywords": [
+      "junior", "intern", "graduate", "entry-level",
+      "associate", "mid-level"
+    ],
+    "required_keywords": [],
+    "salary_min": 80000,
+    "salary_max": null,
+    "exclude_companies": [
+      "Unknown Startup",
+      "Low Budget Company"
+    ],
+    "company_size": ["201-500", "501-1000", "1001-5000", "5001-10000", "10001+"]
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "add_timestamp": true,
+    "base_filename": "premium_quality_jobs",
+    "separate_files_by_type": false
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 15,
+    "show_statistics": true,
+    "show_score_breakdown": true
+  },
+  
+  "api_settings": {
+    "delay_between_requests": 3,
+    "max_retries": 3,
+    "timeout": 30
+  },
+  
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "min_score_notify": 85
+    },
+    "telegram": {
+      "enabled": false,
+      "min_score_notify": 85
+    }
+  },
+  
+  "debug": {
+    "verbose": false,
+    "log_to_file": true
+  }
+}

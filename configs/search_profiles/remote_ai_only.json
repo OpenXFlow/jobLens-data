@@ -1,0 +1,89 @@
+{
+  "version": "2.0.0",
+  "profile_name": "Remote AI/ML Engineer - Quality Focus",
+  "description": "Only top-tier remote AI/ML positions with high relevance",
+  
+  "active_providers": {
+    "linkedin": { 
+      "enabled": true, 
+      "max_results": 25,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Remote", "Europe"],
+    "max_results_per_query": 20,
+    "posted_within_days": 14
+  },
+  
+  "search_queries": [
+    "Senior AI Engineer",
+    "ML Engineer Remote",
+    "LLM Engineer",
+    "AI Research Engineer",
+    "Machine Learning Engineer",
+    "AI Developer Remote",
+    "Python AI Engineer",
+    "AI Automation Engineer",
+    "AI/ML Specialist",
+    "Remote AI Architect"
+  ],
+  
+  "work_preferences": {
+    "work_location_types": ["Remote"],
+    "employment_types": ["Full-time"],
+    "exclude_types": ["Internship", "Part-time"]
+  },
+  
+  "language_requirements": {
+    "required": ["English"],
+    "preferred": [],
+    "exclude": []
+  },
+  
+  "scoring_weights": {
+    "programming_languages": 20,
+    "testing_skills": 10,
+    "embedded_firmware": 5,
+    "domain_expertise": 5,
+    "ai_ml_skills": 40,
+    "known_companies": 15,
+    "seniority_level": 5
+  },
+  
+  "filtering": {
+    "min_relevance_score": 0,
+    "exclude_keywords": ["junior", "intern", "on-site", "office"],
+    "required_keywords": [],
+    "salary_min": 70000,
+    "exclude_companies": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "add_timestamp": true,
+    "base_filename": "remote_ai_jobs",
+    "separate_files_by_type": true
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 20,
+    "show_statistics": true,
+    "show_score_breakdown": true
+  },
+  
+  "api_settings": {
+    "delay_between_requests": 3,
+    "max_retries": 3,
+    "timeout": 30
+  },
+  
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "min_score_notify": 80
+    }
+  }
+}

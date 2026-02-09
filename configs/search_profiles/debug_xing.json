@@ -1,0 +1,47 @@
+{
+  "version": "1.1.0",
+  "profile_name": "Debug XING - Full Analysis",
+  "description": "Verification of XING scraping with full enrichment and scoring enabled",
+  
+  "active_providers": {
+    "xing": { 
+      "enabled": true, 
+      "max_results": 5,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Deutschland"],
+    "max_results_per_query": 5,
+    "posted_within_days": 30,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Python"
+  ],
+  
+  "scoring_weights": {
+    "programming_languages": 30,
+    "ai_ml_skills": 20,
+    "seniority_level": 10,
+    "known_companies": 10
+  },
+  
+  "filtering": {
+    "min_relevance_score": 0,
+    "exclude_keywords": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "base_filename": "debug_xing_results"
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 5,
+    "show_statistics": true
+  }
+}

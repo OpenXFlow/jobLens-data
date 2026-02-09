@@ -1,0 +1,59 @@
+{
+  "roles_and_seniority": [
+    "Intern", "Internship", "Praktikant", "Werkstudent", "Trainee", "Junior", "Entry-level", "Graduate", "Associate",
+    "Mid-level", "Intermediate", "Medior",
+    "Senior", "Senior-level", "Staff", "Principal", "Distinguished", "Fellow",
+    "Lead", "Team Lead", "Tech Lead", "Technical Lead", "Engineering Manager", "Head of", "Director", "VP", "CTO", "CIO",
+    "Architect", "Solution Architect", "System Architect", "Enterprise Architect", "Cloud Architect", "Software Architect",
+    "Freelancer", "Contractor", "Consultant", "Specialist", "Expert", "Evangelist",
+    "Product Owner", "Scrum Master", "Agile Coach", "Project Manager"
+  ],
+  "programming_languages": [
+    "Python", "C", "C++", "C#", "Java", "JavaScript", "TypeScript", "Go", "Golang", "Rust", 
+    "Swift", "Kotlin", "PHP", "Ruby", "Bash", "Shell", "PowerShell", "R", "Scala", "Dart",
+    "Perl", "Lua", "Groovy", "Objective-C", "Assembly", "ASM", "Matlab", "VHDL", "Verilog"
+  ],
+  "cloud_devops": [
+    "AWS", "Amazon Web Services", "Azure", "GCP", "Google Cloud", "Docker", "Kubernetes", "K8s", 
+    "Terraform", "Ansible", "Puppet", "Chef", "Jenkins", "GitLab CI", "GitHub Actions", "CircleCI", "Bamboo",
+    "Prometheus", "Grafana", "Datadog", "Splunk", "ELK Stack", "Kibana", "Elasticsearch", "Logstash",
+    "Linux", "Unix", "Nginx", "Apache", "OpenShift", "Helm", "ArgoCD"
+  ],
+  "ai_ml_data": [
+    "Machine Learning", "Deep Learning", "NLP", "LLM", "Generative AI", "RAG", "Transformer", "BERT", "GPT",
+    "LangChain", "LlamaIndex", "Hugging Face", "PyTorch", "TensorFlow", "Keras", "JAX",
+    "Scikit-learn", "Pandas", "NumPy", "SciPy", "Matplotlib", "Seaborn",
+    "OpenCV", "Computer Vision", "YOLO",
+    "Databricks", "Snowflake", "Spark", "Apache Spark", "Hadoop", "Kafka", "Airflow", "MLOps", "Data Science"
+  ],
+  "testing_qa": [
+    "Selenium", "Playwright", "Cypress", "Appium", "Pytest", "TestNG", "JUnit", "NUnit", "XUnit",
+    "Robot Framework", "Cucumber", "SpecFlow", "Gherkin", "BDD", "TDD",
+    "Postman", "RestAssured", "SoapUI", "JMeter", "LoadRunner", "Gatling", "K6",
+    "Manual Testing", "Regression Testing", "Performance Testing", "Load Testing", "Stress Testing",
+    "HIL", "SIL", "MIL", "Hardware-in-Loop"
+  ],
+  "web_backend": [
+    "Django", "Flask", "FastAPI", "Spring Boot", "Spring", "Hibernate", 
+    "Node.js", "Express", "NestJS", 
+    "React", "Angular", "Vue.js", "Next.js", "Nuxt.js", "Svelte", "Tailwind", "Bootstrap",
+    "GraphQL", "REST API", "gRPC", "Microservices", "Serverless", "ASP.NET", ".NET Core"
+  ],
+  "databases": [
+    "SQL", "PostgreSQL", "MySQL", "MariaDB", "Oracle", "SQL Server", "MSSQL",
+    "NoSQL", "MongoDB", "Redis", "Cassandra", "DynamoDB", "CosmosDB",
+    "Vector Database", "Pinecone", "Weaviate", "Milvus", "ChromaDB"
+  ],
+  "embedded_hardware": [
+    "Embedded Systems", "Firmware", "RTOS", "FreeRTOS", "Zephyr", "QNX", "VxWorks",
+    "Microcontroller", "STM32", "ESP32", "Arduino", "Raspberry Pi", "Nordic", "NXP", "Infineon",
+    "ARM", "Cortex-M", "RISC-V", "DSP", "FPGA", "SoC",
+    "CAN", "CANoe", "CANalyzer", "SPI", "I2C", "UART", "USB", "Ethernet", "Automotive Ethernet",
+    "AUTOSAR", "ISO 26262", "ASPICE", "Misra C", "SystemC", "Altium", "KiCad"
+  ],
+  "tools_and_methods": [
+    "Git", "GitHub", "GitLab", "Bitbucket", "Jira", "Confluence", "Trello", "Asana",
+    "Scrum", "Agile", "Kanban", "Waterfall", "SAFe", "DevOps", "CI/CD",
+    "Visual Studio Code", "IntelliJ", "PyCharm", "Eclipse", "Visual Studio"
+  ]
+}

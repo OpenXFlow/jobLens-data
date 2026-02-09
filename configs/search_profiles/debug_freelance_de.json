@@ -1,0 +1,19 @@
+{
+  "version": "1.1.0",
+  "profile_name": "Debug Freelance.de",
+  "active_providers": {
+    "freelance_de": { "enabled": true, "max_results": 5 }
+  },
+  "search_parameters": {
+    "locations": ["Germany"],
+    "max_results_per_query": 5,
+    "fetch_full_description": true
+  },
+  "search_queries": ["Python"],
+  "scoring_weights": { "programming_languages": 20 },
+  "filtering": { "min_relevance_score": 0, "exclude_keywords": [] },
+  "output": { 
+    "formats": ["csv", "json", "markdown"],
+    "base_filename": "debug_freelance_results" 
+  }
+}

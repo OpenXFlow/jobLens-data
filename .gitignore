@@ -1,0 +1,45 @@
+# The MIT License (MIT)
+# Copyright (c) 2025 Jozef Darida
+# LinkedIn Job Searcher Project
+
+# --- Python Environment & Cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.mypy_cache/
+.ruff_cache/
+
+# --- OS and IDE specific files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# --- DATA SEPARATION (Code/Data logic) ---
+# These folders are strictly for the 'data' branch. 
+# We keep them empty on 'main' to prevent repo bloat.
+outputs/
+results/
+
+# --- CI/CD & Automation Artifacts ---
+# Temporary directory used by GitHub Actions Matrix for consolidation
+temp_artifacts/
+
+# --- Logs & Local Debugging ---
+logs/
+*.log
+# Specific debug artifacts that should never be committed
+logs/*.html
+logs/*.png
+logs/cookies_*.json
+
+# --- Personal Data & Credentials ---
+# Modified: In a PRIVATE repository, we allow committing the profile
+# to enable GitHub Actions automation without complex Secrets management.
+# WARNING: This file contains plain-text passwords.
+# configs/my_profile/*.json  <-- REMOVED to allow my_profile.json
+!configs/my_profile/my_profile.json.example

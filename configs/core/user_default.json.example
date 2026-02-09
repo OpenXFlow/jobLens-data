@@ -1,0 +1,117 @@
+{
+  "version": "2.21.0-example",
+  "profile_name": "Example Search Profile - Unified Template",
+  "description": "Template configuration showing unified provider structures and targeted locations.",
+  
+  "active_providers": {
+    "linkedin": { 
+      "enabled": true, 
+      "max_results": 25,
+      "priority": 1,
+      "locations": ["Germany", "Austria", "Switzerland", "Remote", "Slovakia", "USA", "United Kingdom"]
+    },
+    "hays": { 
+      "enabled": false, 
+      "max_results": 20,
+      "priority": 2,
+      "locations": ["Germany", "Austria", "Switzerland", "United Kingdom", "Remote"]
+    },
+    "solcom": { 
+      "enabled": true, 
+      "max_results": 20, 
+      "priority": 3,
+      "locations": ["Germany", "Austria", "Switzerland", "Remote"]
+    },
+    "freelancermap": { 
+      "enabled": false, 
+      "max_results": 20,
+      "priority": 3,
+      "locations": ["Germany", "Austria", "Switzerland", "Remote"]
+    },
+    "gulp": { 
+      "enabled": false, 
+      "max_results": 15,
+      "priority": 4,
+      "locations": ["Germany", "Remote"]
+    },
+    "freelance_de": { 
+      "enabled": false, 
+      "max_results": 15,
+      "priority": 4,
+      "locations": ["Germany", "Austria", "Remote"]
+    },
+    "xing": { 
+      "enabled": false, 
+      "max_results": 10,
+      "priority": 5,
+      "locations": ["Germany", "Austria", "Switzerland", "Remote"]
+    },
+    "ferchau": { 
+      "enabled": false, 
+      "max_results": 10,
+      "priority": 5,
+      "locations": ["Germany"]
+    }
+  },
+
+  "search_parameters": {
+    "_comment": "Global locations serve as a fallback if provider-specific locations are missing.",
+    "locations": ["Germany", "Austria", "Remote"],
+    "max_results_per_query": 25,
+    "posted_within_days": 30,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Tester",
+    "QA Engineer",
+    "Test Engineer",
+    "Testingenieur",
+    "Test Automation",
+    "Python Developer",
+    "Python Test",
+    "Firmware Engineer"
+  ],
+  
+  "work_preferences": {
+    "work_location_types": ["Remote", "Hybrid", "On-site"],
+    "employment_types": ["Full-time", "Contract", "Freelance"],
+    "exclude_types": ["Internship"]
+  },
+  
+  "language_requirements": {
+    "required": ["English"],
+    "preferred": ["German", "Slovak"],
+    "detect_in": ["title", "description"]
+  },
+  
+  "scoring_weights": {
+    "programming_languages": 20,
+    "testing_skills": 20,
+    "embedded_firmware": 15,
+    "domain_expertise": 10,
+    "ai_ml_skills": 20,
+    "known_companies": 10,
+    "seniority_level": 5
+  },
+  
+  "filtering": {
+    "min_relevance_score": 0,
+    "exclude_keywords": ["junior", "intern", "praktikant"],
+    "required_keywords": [],
+    "salary_min": null,
+    "exclude_companies": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "add_timestamp": true,
+    "base_filename": "job_search_results"
+  },
+  
+  "api_settings": {
+    "delay_between_requests": 2,
+    "max_retries": 3,
+    "timeout": 30
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "version": "2.1.0",
+  "profile_name": "Freelance/Contract Projects",
+  "description": "Short-term freelance and contract opportunities",
+  
+  "active_providers": {
+    "linkedin": { 
+      "enabled": true, 
+      "max_results": 30,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Remote", "Slovakia", "Austria", "Germany", "Europe"],
+    "max_results_per_query": 30,
+    "posted_within_days": 21,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Freelance Python Developer",
+    "Contract Test Engineer",
+    "Python Contractor Remote",
+    "Freelance AI Engineer",
+    "Contract Software Engineer",
+    "Freelance Automation Engineer",
+    "Python Freelancer",
+    "Contract Firmware Engineer",
+    "Freelance Backend Developer",
+    "Contract QA Engineer"
+  ],
+  
+  "work_preferences": {
+    "work_location_types": ["Remote", "Hybrid"],
+    "employment_types": ["Freelance", "Contract"],
+    "exclude_types": ["Full-time", "Part-time", "Internship"]
+  },
+  
+  "language_requirements": {
+    "required": ["English"],
+    "preferred": ["German"],
+    "exclude": []
+  },
+  
+  "scoring_weights": {
+    "programming_languages": 25,
+    "testing_skills": 20,
+    "embedded_firmware": 15,
+    "domain_expertise": 10,
+    "ai_ml_skills": 20,
+    "known_companies": 5,
+    "seniority_level": 5
+  },
+  
+  "filtering": {
+    "min_relevance_score": 40,
+    "exclude_keywords": ["full-time only", "permanent", "on-site only"],
+    "required_keywords": [],
+    "salary_min": null,
+    "exclude_companies": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "add_timestamp": true,
+    "base_filename": "freelance_projects",
+    "separate_files_by_type": true
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 30,
+    "show_statistics": true
+  },
+  
+  "api_settings": {
+    "delay_between_requests": 2,
+    "max_retries": 3,
+    "timeout": 30
+  }
+}

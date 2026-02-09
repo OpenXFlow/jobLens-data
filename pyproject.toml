@@ -1,0 +1,116 @@
+# The MIT License (MIT)
+# Copyright (c) 2025 Jozef Darida
+# LinkedIn Job Searcher Project
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linkedin-job-searcher"
+version = "3.2.1"
+description = "Automated LinkedIn Job Searcher with configurable profiles and AI enrichment"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+  {name = "OpenXFlow", email = "your.email@example.com"}
+]
+keywords = ["linkedin", "job-search", "scraper", "automation", "ai", "hays", "solcom"]
+dependencies = [
+  "requests>=2.28.0",
+  "beautifulsoup4>=4.12.0",
+  "types-requests>=2.31.0",
+  "selenium>=4.10.0",
+  "webdriver-manager>=4.0.0",
+  "undetected-chromedriver>=3.5.0",
+  "setuptools",
+  "pandas>=2.0.0",
+  "openpyxl>=3.1.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/OpenXFlow/linkedin_job_search"
+"Bug Tracker" = "https://github.com/OpenXFlow/linkedin_job_search/issues"
+
+# ====================================================================================
+# === Tooling Configuration ==========================================================
+# ====================================================================================
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# --- Ruff: Linter and Formatter Configuration ---
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+# Selected rules according to "gemini_pravidla_na_spolupracu.md"
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # Pyflakes
+    "I",    # isort (import sorting)
+    "D",    # pydocstyle (docstrings)
+    "ANN",  # flake8-annotations (type hints)
+    "UP",   # pyupgrade (modern Python syntax)
+    "S",    # flake8-bandit (security)
+    "B",    # flake8-bugbear (common bugs)
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "T20",  # flake8-print (disallow print in production, allowed in CLI)
+    "RET",  # flake8-return
+    "SIM",  # flake8-simplify
+    "ARG",  # flake8-unused-arguments
+    "PTH",  # flake8-use-pathlib
+    "ERA",  # eradicate (commented out code)
+    "PL",   # Pylint (complexity and quality)
+    "TRY",  # tryceratops (try-except anti-patterns)
+    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    "ANN101", # Missing type annotation for self (redundant)
+    "ANN102", # Missing type annotation for cls (redundant)
+    "S101",   # Use of assert (allowed for tests)
+    "D211",   # No-blank-line-before-class (conflict with D203)
+    "D213",   # Multi-line-summary-second-line (conflict with D212)
+    "T201",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pylint]
+max-args = 7
+max-statements = 50
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# --- MyPy: Type Checking Configuration ---
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "requests.*",
+    "bs4.*",
+    "selenium.*",
+    "webdriver_manager.*",
+    "undetected_chromedriver.*",
+]
+ignore_missing_imports = true
+
+# End of pyproject.toml (v. 3.2.1)

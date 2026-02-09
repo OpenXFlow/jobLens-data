@@ -1,0 +1,52 @@
+{
+  "_comment": "Technická konfigurácia providerov - URL, metódy a limity",
+  
+  "linkedin": {
+    "name": "LinkedIn Guest API",
+    "enabled_globally": true,
+    "base_url": "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search",
+    "method": "requests",
+    "rate_limit_delay": 2,
+    "requires_login": false,
+    "capabilities": {
+      "full_description": true,
+      "remote_filter": true
+    }
+  },
+  
+  "solcom": {
+    "name": "SOLCOM Freelance Projects",
+    "enabled_globally": true,
+    "base_url": "https://www.solcom.de/de/projekte",
+    "method": "requests",
+    "rate_limit_delay": 1,
+    "requires_login": false
+  },
+  
+  "freelancermap": {
+    "name": "Freelancermap DACH",
+    "enabled_globally": true,
+    "base_url": "https://www.freelancermap.de/projektboerse.html",
+    "method": "requests",
+    "rate_limit_delay": 2,
+    "requires_login": false
+  },
+  
+  "xing": {
+    "name": "XING Jobs",
+    "enabled_globally": true,
+    "base_url": "https://www.xing.com/jobs/search",
+    "method": "playwright",
+    "rate_limit_delay": 5,
+    "requires_login": true
+  },
+  
+  "stepstone": {
+    "name": "StepStone Germany",
+    "enabled_globally": true,
+    "base_url": "https://www.stepstone.de/jobs",
+    "method": "playwright",
+    "rate_limit_delay": 3,
+    "requires_login": false
+  }
+}

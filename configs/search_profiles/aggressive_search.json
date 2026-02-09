@@ -1,0 +1,87 @@
+{
+  "version": "2.1.0",
+  "profile_name": "Aggressive Search - Maximum Coverage",
+  "description": "Cast wide net - get as many job opportunities as possible",
+  
+  "active_providers": {
+    "linkedin": { 
+      "enabled": true, 
+      "max_results": 50,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": [
+      "Slovakia", "Czech Republic", "Austria", "Germany", 
+      "Poland", "Hungary", "Remote", "Europe"
+    ],
+    "max_results_per_query": 50,
+    "posted_within_days": 60,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Software Engineer",
+    "Test Engineer",
+    "Python Developer",
+    "Firmware Engineer",
+    "QA Engineer",
+    "Automation Engineer",
+    "DevOps Engineer",
+    "Backend Developer",
+    "AI Engineer",
+    "ML Engineer",
+    "Senior Engineer",
+    "Lead Engineer"
+  ],
+  
+  "work_preferences": {
+    "work_location_types": ["Remote", "Hybrid", "On-site"],
+    "employment_types": ["Full-time", "Contract", "Freelance"],
+    "exclude_types": []
+  },
+  
+  "language_requirements": {
+    "required": [],
+    "preferred": ["English"],
+    "exclude": []
+  },
+  
+  "scoring_weights": {
+    "programming_languages": 25,
+    "testing_skills": 20,
+    "embedded_firmware": 15,
+    "domain_expertise": 10,
+    "ai_ml_skills": 15,
+    "known_companies": 10,
+    "seniority_level": 5
+  },
+  
+  "filtering": {
+    "min_relevance_score": 25,
+    "exclude_keywords": [],
+    "required_keywords": [],
+    "salary_min": null,
+    "exclude_companies": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "add_timestamp": true,
+    "base_filename": "aggressive_search_results",
+    "separate_files_by_type": false
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 50,
+    "show_statistics": true
+  },
+  
+  "api_settings": {
+    "delay_between_requests": 2,
+    "max_retries": 3,
+    "timeout": 30
+  }
+}
