@@ -1,0 +1,58 @@
+{
+  "version": "1.1.0",
+  "profile_name": "Debug LinkedIn - Integration Test",
+  "description": "Verification of LinkedIn Guest API scraping and detail enrichment",
+  
+  "active_providers": {
+    "linkedin": { 
+      "enabled": true, 
+      "max_results": 10,
+      "priority": 1
+    }
+  },
+
+  "search_parameters": {
+    "locations": ["Germany", "Remote"],
+    "max_results_per_query": 10,
+    "posted_within_days": 30,
+    "fetch_full_description": true
+  },
+  
+  "search_queries": [
+    "Python"
+  ],
+
+  "scoring_weights": {
+    "programming_languages": 20,
+    "testing_skills": 20,
+    "embedded_firmware": 15,
+    "ai_ml_skills": 20,
+    "known_companies": 10,
+    "seniority_level": 15
+  },
+  
+  "filtering": {
+    "min_relevance_score": 0,
+    "exclude_keywords": [],
+    "required_keywords": [],
+    "exclude_companies": []
+  },
+  
+  "output": {
+    "formats": ["json", "csv", "markdown"],
+    "add_timestamp": true,
+    "base_filename": "debug_linkedin_results",
+    "separate_files_by_type": false
+  },
+  
+  "report": {
+    "console_output": true,
+    "top_n_jobs": 10,
+    "show_statistics": true
+  },
+
+  "debug": {
+    "verbose": true,
+    "log_to_file": true
+  }
+}

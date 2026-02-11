@@ -6,17 +6,18 @@
 
 This module handles searching and data extraction from XING.com using
 the centralized SeleniumFactory.
-Refactored (v. 00025) - Stability: Improved process cleanup to prevent
-'WinError 6' noise in Windows console during driver termination.
+Refactored (v. 00028) - Data Recovery: Added aggressive fallbacks (Page Title)
+and relaxed return conditions to prevent 'Pending Extraction' in Manual Mode.
 """
 
 import contextlib
 import json
+import random
 import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 import undetected_chromedriver as uc  # type: ignore
@@ -66,24 +67,15 @@ class XingProvider:
             if location:
                 query_url += f"&location={location}"
 
-            print(f"   [DEBUG] Opening XING: {query_url}")
+            print(f"   [TRACE] [XING] Navigating to: {query_url}")
             driver.get(query_url)
 
-            # 1. Handle Cookie Consent
-            with contextlib.suppress(Exception):
-                time.sleep(2)
-                cookie_btn = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-testid='uc-accept-all']"))
-                )
-                driver.execute_script("arguments[0].click();", cookie_btn)
-                time.sleep(1)
-
-            # 2. Wait for content
-            time.sleep(3)
+            self._handle_cookies(driver)
+            time.sleep(random.uniform(3, 5))  # noqa: S311
 
             soup = BeautifulSoup(driver.page_source, "html.parser")
             job_articles = soup.find_all("article")
-            print(f"   [DEBUG] Items found via XING Selenium: {len(job_articles)}")
+            print(f"   [DEBUG] [XING] Found {len(job_articles)} items.")
 
             for card in job_articles[:limit]:
                 if isinstance(card, Tag):
@@ -92,7 +84,7 @@ class XingProvider:
                         found_jobs.append(job_data)
 
         except Exception as e:
-            print(f"   [DEBUG] XING Selenium Error: {e}")
+            print(f"   [DEBUG] XING Search Error: {e}")
         finally:
             if driver:
                 self._safe_quit(driver)
@@ -100,26 +92,22 @@ class XingProvider:
         return found_jobs
 
     def _safe_quit(self, driver: uc.Chrome) -> None:
-        """Safely terminates the driver to avoid WinError 6 noise.
-
-        Args:
-            driver: The active Chrome driver instance.
-        """
+        """Safely terminates the driver to avoid WinError 6 noise."""
         with contextlib.suppress(Exception):
-            driver.close()
+            time.sleep(0.5)
             driver.quit()
 
+    def _handle_cookies(self, driver: uc.Chrome) -> None:
+        """Handles cookie consent banner."""
+        with contextlib.suppress(Exception):
+            cookie_btn = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-testid='uc-accept-all']"))
+            )
+            driver.execute_script("arguments[0].click();", cookie_btn)
+            time.sleep(1)
+
     def _parse_card(self, card: Tag, query: str, req_loc: str) -> Optional[Dict[str, Any]]:
-        """Extracts basic job data from a card.
-
-        Args:
-            card: BeautifulSoup Tag of the job card.
-            query: Current query string.
-            req_loc: Requested location string.
-
-        Returns:
-            Optional[Dict[str, Any]]: Partial job data.
-        """
+        """Extracts basic job data from a card."""
         try:
             link_tag = card.find("a", href=re.compile(r"/jobs/"))
             if not isinstance(link_tag, Tag):
@@ -153,69 +141,90 @@ class XingProvider:
         except Exception:
             return None
 
-    def fetch_full_description(self, url: str) -> str:
-        """Fetches description and extracts accurate metadata including large salary ranges.
+    def fetch_full_description(self, url: str) -> Union[str, Dict[str, str]]:
+        """Fetches description and metadata using Selenium to support Manual Mode."""
+        result: Union[str, Dict[str, str]] = ""
+        driver: Optional[uc.Chrome] = None
 
-        Args:
-            url: Job detail URL.
+        print(f"   [DEBUG] [XING] Fetching details: {url}")
 
-        Returns:
-            str: Description with embedded metadata tags.
-        """
         try:
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            resp = self.session.get(url, headers=headers, timeout=10)
-            if resp.status_code != self.HTTP_OK:
-                return ""
+            driver = SeleniumFactory.setup_driver()
+            driver.get(url)
+            self._handle_cookies(driver)
+            time.sleep(random.uniform(3, 5))  # noqa: S311
 
-            soup = BeautifulSoup(resp.text, "html.parser")
-            page_text = soup.get_text()
+            soup = BeautifulSoup(driver.page_source, "html.parser")
 
-            # 1. Metadata Extraction via JSON-LD
-            meta_prefix = ""
-            json_ld = soup.find("script", type="application/ld+json")
-            if json_ld and isinstance(json_ld.string, str):
-                with contextlib.suppress(json.JSONDecodeError):
-                    data = json.loads(json_ld.string)
-                    org = data.get("hiringOrganization")
-                    company = org.get("name") if isinstance(org, dict) else None
-                    if company:
-                        meta_prefix += f"[COMPANY]{company}[/COMPANY]"
+            data = {"description": "", "title": "", "company": "XING Employer", "location": "Germany"}
 
-                    loc_data = data.get("jobLocation", [{}])
-                    if isinstance(loc_data, list) and loc_data:
-                        city = loc_data[0].get("address", {}).get("addressLocality")
-                        if city:
-                            meta_prefix += f"[LOCATION]{city}[/LOCATION]"
+            # 1. Try Extracting from JSON-LD
+            self._extract_json_ld(soup, data)
 
-            # 2. Advanced Salary Extraction (Improved regex for thousands)
-            salary_text = ""
-            num_pattern = r"\d{1,3}(?:[.,]\d{3})*"
-            salary_range_pattern = rf"(?:€|EUR)\s?({num_pattern}).*?(?:to|bis|-)\s?(?:€|EUR)\s?({num_pattern})"
+            # 2. Try HTML Fallbacks
+            self._extract_html_fallback(soup, data)
 
-            s_match = re.search(salary_range_pattern, page_text, re.IGNORECASE)
-            if s_match:
-                low, high = s_match.groups()
-                salary_text = f"[SALARY]{low} - {high} EUR[/SALARY]"
-            else:
-                forecast_match = re.search(rf"Salary forecast:.*?({num_pattern}).*?({num_pattern})", page_text)
-                if forecast_match:
-                    low, high = forecast_match.groups()
-                    salary_text = f"[SALARY]{low} - {high} EUR[/SALARY]"
+            # 3. Last Resort: Use Page Title for Job Title
+            if not data["title"]:
+                page_title = driver.title
+                if page_title and "XING" not in page_title:  # Avoid "Sign In | XING"
+                    data["title"] = page_title.split("|")[0].strip()
 
-            # 3. Extract Job Description text
+            # Return Dictionary if we found AT LEAST a title or description
+            # This ensures "Pending Extraction" is overwritten even if description is protected
+            if data["title"] or data["description"]:
+                result = data
+
+        except Exception as e:
+            print(f"   [DEBUG] XING Detail Error: {e}")
+        finally:
+            if driver:
+                self._safe_quit(driver)
+
+        return result
+
+    def _extract_json_ld(self, soup: BeautifulSoup, data: Dict[str, str]) -> None:
+        """Parses JSON-LD script tags for job metadata."""
+        json_ld = soup.find("script", type="application/ld+json")
+        if json_ld and isinstance(json_ld.string, str):
+            with contextlib.suppress(json.JSONDecodeError):
+                ld_data = json.loads(json_ld.string)
+                data["title"] = ld_data.get("title", data["title"])
+
+                org = ld_data.get("hiringOrganization")
+                if isinstance(org, dict):
+                    data["company"] = org.get("name", data["company"])
+
+                loc_data = ld_data.get("jobLocation", [{}])
+                if isinstance(loc_data, dict):
+                    loc_data = [loc_data]
+
+                if loc_data and isinstance(loc_data, list):
+                    addr = loc_data[0].get("address", {})
+                    city = addr.get("addressLocality")
+                    if city:
+                        data["location"] = city
+
+    def _extract_html_fallback(self, soup: BeautifulSoup, data: Dict[str, str]) -> None:
+        """Parses HTML elements if JSON-LD extraction was incomplete."""
+        if not data["title"]:
+            h1 = soup.find("h1")
+            if h1:
+                data["title"] = h1.get_text(strip=True)
+
+        if not data["description"]:
+            # Expanded selectors for different XING layouts
             desc_section = (
-                soup.find("section", attrs={"data-testid": "job-details-content"})
+                soup.find("div", attrs={"data-testid": "html-renderer"})
+                or soup.find("section", attrs={"data-testid": "job-details-content"})
                 or soup.find("div", id="job-description")
-                or soup.find("div", class_="job-description")
+                or soup.find("main")  # Aggressive fallback
             )
-
-            main_text = desc_section.get_text(separator="\n", strip=True) if desc_section else ""
-
-        except Exception:
-            return ""
-        else:
-            return f"{meta_prefix}{salary_text}\n{main_text}"
+            if desc_section:
+                # Remove scripts and styles to clean text
+                for s in desc_section(["script", "style", "nav", "header", "footer"]):
+                    s.decompose()
+                data["description"] = desc_section.get_text(separator="\n", strip=True)
 
 
-# End of src/core/providers/xing.py (v. 00025)
+# End of src/core/providers/xing.py (v. 00028)

@@ -6,8 +6,8 @@
 
 This module provides a centralized factory for creating configured
 undetected-chromedriver instances with military-grade stealth for Headless mode.
-Refactored (v. 00005) - Stealth Overhaul: Added localized headers,
-language spoofing, and advanced arguments to bypass "fake geo-blocks".
+Refactored (v. 00007) - Stability: Added threading Lock to prevent WinError 32
+collisions during parallel driver initialization on Windows.
 """
 
 import os
@@ -15,6 +15,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 from typing import Optional
 
 import undetected_chromedriver as uc  # type: ignore
@@ -22,6 +23,12 @@ import undetected_chromedriver as uc  # type: ignore
 
 class SeleniumFactory:
     """Factory class for managing Selenium WebDriver instances."""
+
+    # Programmatic toggle to force headless mode from CLI
+    FORCE_HEADLESS: bool = False
+
+    # Global lock to prevent WinError 32 when multiple threads initialize drivers simultaneously
+    _init_lock: threading.Lock = threading.Lock()
 
     @staticmethod
     def get_chrome_major_version() -> Optional[int]:
@@ -71,7 +78,7 @@ class SeleniumFactory:
     def setup_driver(cls) -> uc.Chrome:
         """Configures and initializes an undetected Chrome driver.
 
-        Handles environment-specific settings with maximum stealth.
+        Handles environment-specific settings with maximum stealth and thread safety.
 
         Returns:
             uc.Chrome: Initialized driver instance.
@@ -81,14 +88,17 @@ class SeleniumFactory:
         env_gha = str(os.environ.get("GITHUB_ACTIONS", "")).strip().lower()
         is_ci = env_gha == "true"
 
+        # Headless is active if in CI OR if explicitly requested via CLI
+        active_headless = is_ci or cls.FORCE_HEADLESS
+
         # 1. Advanced Anti-Detection Arguments
-        # We use a real-looking user agent and language
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"  # noqa: E501
         options.add_argument(f"--user-agent={user_agent}")
         options.add_argument("--lang=de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7")
 
-        if is_ci:
-            print("   [FACTORY] CI/Headless mode activated with Ultra-Stealth.")
+        if active_headless:
+            mode_desc = "CI" if is_ci else "Manual"
+            print(f"   [FACTORY] {mode_desc} Headless mode activated with Ultra-Stealth.")
             options.add_argument("--headless=new")
             options.add_argument("--window-size=1920,1080")
             # Bypass specific bot checks
@@ -110,11 +120,11 @@ class SeleniumFactory:
         detected_version = cls.get_chrome_major_version()
         target_version = detected_version if detected_version else (None if is_ci else 143)
 
-        # Initialize the driver
-        driver = uc.Chrome(options=options, use_subprocess=True, version_main=target_version)
+        # 2. Critical Thread Safety for Windows initialization (WinError 32 fix)
+        with cls._init_lock:
+            driver = uc.Chrome(options=options, use_subprocess=True, version_main=target_version)
 
-        # 2. In-browser JS Stealth Patches
-        # Inject scripts to hide Selenium footprints
+        # 3. In-browser JS Stealth Patches
         driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {
@@ -130,4 +140,4 @@ class SeleniumFactory:
         return driver
 
 
-# End of src/core/selenium_factory.py (v. 00005)
+# End of src/core/selenium_factory.py (v. 00007)

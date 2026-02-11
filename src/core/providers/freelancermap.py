@@ -5,18 +5,20 @@
 """Freelancermap Job Provider Module.
 
 This module handles searching and data extraction from Freelancermap.de using
-the centralized SeleniumFactory.
-Refactored (v. 00012) - Stability: Added localized URL support and safe cleanup
-to prevent 'WinError 6' noise in Windows environments.
+the centralized SeleniumFactory and advanced React-state JSON parsing.
+Refactored (v. 00023) - Clean Code: Split _extract_deep_data into sub-methods
+to resolve Ruff PLR0912 (Too many branches) and improved SRP.
 """
 
 import contextlib
+import json
 import os
 import random
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional, Union
 
 import requests
 import undetected_chromedriver as uc  # type: ignore
@@ -73,8 +75,6 @@ class FreelancermapProvider:
 
         try:
             driver = SeleniumFactory.setup_driver()
-
-            # Construct search URL (sort=2 is for 'latest')
             url = f"{self.BASE_URL}?query={keywords}&sort=2"
             if localized_loc:
                 url += f"&location={localized_loc}"
@@ -82,11 +82,10 @@ class FreelancermapProvider:
             print(f"   [TRACE] [FM] Navigating to: {url}")
             driver.get(url)
 
-            # S311: Standard random is safe for non-cryptographic delays
+            # S311: Standard random is safe for human-like delays (noqa)
             time.sleep(random.uniform(3, 5))  # noqa: S311
             self._handle_cookies(driver)
 
-            # Wait for project cards
             wait = WebDriverWait(driver, 20)
             item_class = "project-card"
 
@@ -118,7 +117,7 @@ class FreelancermapProvider:
     def _safe_quit(self, driver: uc.Chrome) -> None:
         """Safely terminates driver service to avoid WinError 6 noise."""
         with contextlib.suppress(Exception):
-            driver.close()
+            time.sleep(0.5)
             driver.quit()
 
     def _handle_cookies(self, driver: uc.Chrome) -> None:
@@ -142,7 +141,6 @@ class FreelancermapProvider:
     def _parse_card(self, card: Tag, query: str, req_loc: str) -> Optional[Dict[str, Any]]:
         """Extracts data from a single project card."""
         try:
-            # 1. Title and Link
             link_tag = card.find("a", attrs={"data-testid": "title"})
             if not isinstance(link_tag, Tag):
                 return None
@@ -154,28 +152,11 @@ class FreelancermapProvider:
             full_link = f"{self.DOMAIN}{href}" if href.startswith("/") else href
             job_id = href.split("/")[-1]
 
-            # 2. Meta Info
-            location = "Germany"
             city_div = card.find("div", attrs={"data-testid": "city"})
-            if city_div:
-                location = city_div.get_text(" ", strip=True).replace(",", "").strip()
+            location = city_div.get_text(" ", strip=True).replace(",", "").strip() if city_div else "Germany"
 
-            posted_at = "Recent"
             created_tag = card.find("span", attrs={"data-testid": "created"})
-            if created_tag:
-                posted_at = created_tag.get_text(strip=True)
-
-            # 3. Work Location Type
-            remote_text = ""
-            remote_div = card.find("div", attrs={"data-testid": "remoteInPercent"})
-            if remote_div:
-                remote_text = remote_div.get_text(strip=True)
-
-            # 4. Employment type
-            emp_type = "Freelance"
-            type_div = card.find("div", attrs={"data-testid": "type"})
-            if type_div:
-                emp_type = type_div.get_text(strip=True)
+            posted_at = created_tag.get_text(strip=True) if created_tag else "Recent"
 
             return {
                 "title": title,
@@ -188,53 +169,119 @@ class FreelancermapProvider:
                 "scraped_at": datetime.now(timezone.utc).isoformat(),
                 "description": "",
                 "relevance_score": 0,
-                "work_location_type": self._guess_location_type(f"{title} {location} {remote_text}"),
-                "employment_type": emp_type,
+                "work_location_type": "On-site",
+                "employment_type": "Freelance",
                 "search_criteria": f"{query} | {req_loc}",
             }
         except Exception:
             return None
 
-    def _guess_location_type(self, text: str) -> str:
-        """Determines location type from text."""
-        text_lower = text.lower()
-        if any(kw in text_lower for kw in ["remote", "home office", "100%"]):
-            return "Remote"
-        if "hybrid" in text_lower:
-            return "Hybrid"
-        return "On-site"
-
-    def fetch_full_description(self, url: str) -> str:
-        """Fetches full project description from detail page."""
+    def fetch_full_description(self, url: str) -> Union[str, Dict[str, str]]:
+        """Fetches full project description and company metadata."""
         if not url:
             return ""
 
+        print(f"   [DEBUG] [FM] Fetching details: {url}")
+        driver: Optional[uc.Chrome] = None
         try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8",
-                "Referer": self.BASE_URL,
-            }
-            resp = self.session.get(url, headers=headers, timeout=15)
-            if resp.status_code != self.HTTP_OK:
-                return ""
-
-            soup = BeautifulSoup(resp.text, "html.parser")
-            content = (
-                soup.find("div", class_="project-description")
-                or soup.find("div", id="project-description")
-                or soup.find("div", attrs={"data-testid": "description"})
-            )
-
-            if content:
-                for tag in content(["script", "style", "button"]):
-                    tag.decompose()
-                return content.get_text(separator="\n", strip=True)
-
+            driver = SeleniumFactory.setup_driver()
+            driver.get(url)
+            time.sleep(random.uniform(3, 5))  # noqa: S311
+            return self._extract_deep_data(driver.page_source)
         except Exception as e:
-            print(f"   [DEBUG] [FM] Detail fetch error: {e}")
+            print(f"   [DEBUG] [FM] Detail fetch failed: {e}")
+            return ""
+        finally:
+            if driver:
+                self._safe_quit(driver)
 
-        return ""
+    def _extract_deep_data(self, html: str) -> Dict[str, str]:
+        """Orchestrates parsing from multiple sources to ensure high fidelity."""
+        soup = BeautifulSoup(html, "html.parser")
+        result = {"description": "", "company": "", "title": "", "location": ""}
+
+        # Priority 1: Modern React State
+        self._extract_from_react_state(soup, result)
+
+        # Priority 2: JSON-LD (Search for missing fields)
+        if not result["company"] or not result["location"]:
+            self._extract_from_json_ld(soup, result)
+
+        # Priority 3: Final HTML fallbacks
+        self._apply_html_fallbacks(soup, result)
+
+        return result
+
+    def _extract_from_react_state(self, soup: BeautifulSoup, result: Dict[str, str]) -> None:
+        """Parses the 'js-react-on-rails-component' JSON script tag."""
+        with contextlib.suppress(Exception):
+            selector = {"class_": "js-react-on-rails-component", "data-component-name": "ProjectShow"}
+            tag = soup.find("script", **selector)
+            if isinstance(tag, Tag) and tag.string:
+                data = json.loads(tag.string)
+                project = data.get("project", {})
+
+                result["title"] = project.get("title", "").strip()
+
+                # Handle polymorphic company
+                comp = project.get("company")
+                result["company"] = comp.get("name", "").strip() if isinstance(comp, dict) else str(comp or "").strip()
+
+                # Handle polymorphic country
+                city = project.get("city", "")
+                country_raw = project.get("country")
+                country = country_raw.get("localizedName", "") if isinstance(country_raw, dict) else ""
+                result["location"] = f"{city} {country}".strip()
+
+                # Handle description and skills
+                desc_html = project.get("description", "")
+                if desc_html:
+                    result["description"] = BeautifulSoup(desc_html, "html.parser").get_text(separator="\n", strip=True)
+
+                skills = [s.get("localizedName") for s in project.get("skills", {}).get("enabled", [])]
+                if skills:
+                    result["description"] += "\n\nSkills: " + ", ".join(skills)
+
+    def _extract_from_json_ld(self, soup: BeautifulSoup, result: Dict[str, str]) -> None:
+        """Parses all 'application/ld+json' tags for metadata recovery."""
+        with contextlib.suppress(Exception):
+            for tag in soup.find_all("script", type="application/ld+json"):
+                if not tag.string:
+                    continue
+                data = json.loads(tag.string)
+                items = data if isinstance(data, list) else [data]
+                for item in items:
+                    if item.get("@type") == "JobPosting":
+                        self._parse_job_posting_ld(item, result)
+
+    def _parse_job_posting_ld(self, item: Dict[str, Any], result: Dict[str, str]) -> None:
+        """Helper to extract specific fields from a JobPosting JSON-LD object."""
+        org = item.get("hiringOrganization")
+        if isinstance(org, dict) and not result["company"]:
+            result["company"] = org.get("name", "").strip()
+
+        loc = item.get("jobLocation")
+        if isinstance(loc, dict) and not result["location"]:
+            addr = loc.get("address", {})
+            if isinstance(addr, dict):
+                result["location"] = addr.get("addressLocality", "").strip()
+
+    def _apply_html_fallbacks(self, soup: BeautifulSoup, result: Dict[str, str]) -> None:
+        """Applies manual HTML parsing as a last resort."""
+        if not result["company"]:
+            selector = re.compile(r"/profil/firma/")
+            node = soup.find("div", class_="company-name") or soup.find("a", href=selector)
+            if node:
+                result["company"] = node.get_text(strip=True)
+
+        if not result["description"]:
+            cont = (
+                soup.find("div", class_="ql-editor")
+                or soup.find("div", class_="project-body-description")
+                or soup.find("div", id="project-description")
+            )
+            if cont:
+                result["description"] = cont.get_text(separator="\n", strip=True)
 
 
-# End of src/core/providers/freelancermap.py (v. 00012)
+# End of src/core/providers/freelancermap.py (v. 00023)

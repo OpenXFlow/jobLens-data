@@ -2,14 +2,15 @@
 # Copyright (c) 2025 Jozef Darida
 # LinkedIn Job Searcher Project
 
-"""Core Engine for Job Searching with Multithreading support.
+"""Core Engine for Job Searching with Bilingual and Manual support.
 
-This module orchestrates the job search pipeline across multiple providers,
-handles deduplication, scoring, and data persistence.
-Refactored (v. 00034) - Compliance: Fixed Ruff E501 (line length) and optimized
-provider-specific location handling.
+This module orchestrates the job search pipeline, supporting both automated
+portal scraping and manual URL analysis with EN/DE language detection.
+Refactored (v. 00052) - Final Scoring Parity: Enforced full re-calculation
+during enrichment to eliminate discrepancies between manual and auto modes.
 """
 
+import contextlib
 import csv
 import json
 import re
@@ -18,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import requests
 
@@ -34,7 +35,7 @@ class InvalidJSONContentError(TypeError):
 
 
 class JobSearchEngine:
-    """Main class managing the job search pipeline."""
+    """Main class managing the job search and analysis pipeline."""
 
     HTTP_OK: int = 200
     MAX_WORKERS_SEARCH: int = 6
@@ -50,21 +51,14 @@ class JobSearchEngine:
         global_skills_path: str = "configs/data/default_it_skills.json",
         forced_providers: Optional[List[str]] = None,
     ) -> None:
-        """Initializes the engine with required configurations.
-
-        Args:
-            search_profile_name: Name of the JSON config file.
-            cv_path: Path to the user CV JSON.
-            global_skills_path: Path to the global skills database.
-            forced_providers: Optional list of provider keys to override settings.
-        """
+        """Initializes the engine with required configurations."""
         self.config_path: Path = self._resolve_search_profile_path(search_profile_name)
         self.cv_path: Path = Path(cv_path)
         self.global_skills_path: Path = Path(global_skills_path)
 
         self.profile: Dict[str, Any] = self._load_json(self.cv_path)
         self.config: Dict[str, Any] = self._load_json(self.config_path)
-        self.global_skills: Set[str] = self._load_global_skills(self.global_skills_path)
+        self.global_skills_raw: Dict[str, Any] = self._load_json(self.global_skills_path)
 
         if forced_providers:
             self._override_providers(forced_providers)
@@ -73,122 +67,223 @@ class JobSearchEngine:
         self._init_session()
         self.jobs_data: List[Dict[str, Any]] = []
         self.data_lock: Lock = Lock()
+        self.is_manual_mode: bool = False
         self._setup_output_dir()
 
     def run(self) -> int:
-        """Starts the search pipeline.
-
-        Returns:
-            int: Number of unique jobs found.
-        """
+        """Starts the standard automated search pipeline."""
         self._print_config_summary()
-        skills_count = len(self.MY_SKILLS_SET)
-        comp_count = len(self.profile.get("known_companies", []))
-        print(f"🧠 PROFILE LOADED: {skills_count} skills, {comp_count} companies")
-
         start_time = time.time()
         try:
             self.search_jobs()
-            self.remove_duplicates()
-
-            # Initial enrichment on search-view data
-            self._enrich_all_jobs_locally()
-
-            self.fetch_full_descriptions()
-            self.analyze_and_score()
-
-            # Final saves
-            self.save_raw_data(silent=False)
-            self.autosave_filtered(silent=False)
-
-            self.generate_report()
-            print(f"\n✅ DONE! ({time.time() - start_time:.1f}s)")
+            self.finalize_pipeline(start_time)
         except KeyboardInterrupt:
             print("\n⚠️ Interrupted by user")
 
         return len(self.jobs_data)
 
+    def run_manual_mode(self, input_csv: str) -> int:
+        """Starts the engine in manual injection mode using links from a CSV."""
+        csv_path = Path(input_csv)
+        if not csv_path.exists():
+            print(f"❌ Error: Input file '{input_csv}' not found.")
+            return 0
+
+        self.is_manual_mode = True
+        print(f"\n🚀 MANUAL MODE: Loading links from {csv_path.name}")
+        manual_links = []
+        with csv_path.open("r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                link = row.get("link")
+                if not link:
+                    continue
+
+                p_key = ProviderRegistry.get_provider_key_from_url(link) or "linkedin"
+
+                job_template = {
+                    "link": link,
+                    "provider": p_key,
+                    "job_id": str(time.time()),
+                    "title": "Pending Extraction...",
+                    "company": "Pending Extraction...",
+                    "location": "Remote",
+                    "description": "",
+                    "scraped_at": datetime.now(timezone.utc).isoformat(),
+                    "posted_at_relative": "N/A",
+                    "work_location_type": "Remote",
+                    "employment_type": "Freelance",
+                    "search_criteria": f"Manual | {csv_path.name}",
+                    "relevance_score": 0,
+                }
+                manual_links.append(job_template)
+
+        with self.data_lock:
+            self.jobs_data = manual_links
+
+        start_time = time.time()
+        self.finalize_pipeline(start_time)
+        return len(self.jobs_data)
+
+    def finalize_pipeline(self, start_time: float) -> None:
+        """Completes the common steps of the analysis pipeline."""
+        self.remove_duplicates()
+        self._enrich_all_jobs_locally()
+        self.fetch_full_descriptions()
+        self.analyze_and_score()
+
+        self.save_raw_data(silent=False)
+        self.autosave_filtered(silent=False)
+        self.generate_report()
+        print(f"\n✅ DONE! ({time.time() - start_time:.1f}s)")
+
     def _enrich_all_jobs_locally(self) -> None:
-        """Performs scoring on partial data from search view before full enrichment."""
+        """Performs initial scoring on all jobs in the data list."""
         with self.data_lock:
             for job in self.jobs_data:
                 self._enrich_job_data(job)
 
-    def _has_skill(self, text: str, skill: str) -> bool:
-        """Robust matching tolerant to commas and brackets.
+    def _detect_language(self, text: str) -> str:
+        """Detects if text is primarily English or German."""
+        text_lower = text.lower()
+        de_words = {"der", "die", "das", "und", "mit", "von", "den", "auf", "ist"}
+        en_words = {"the", "and", "with", "from", "for", "that", "this", "is", "are"}
 
-        Args:
-            text: The text to search in.
-            skill: The skill keyword to look for.
+        words = re.findall(r"\b\w{2,}\b", text_lower)
+        de_score = sum(1 for w in words if w in de_words)
+        en_score = sum(1 for w in words if w in en_words)
 
-        Returns:
-            bool: True if skill is found.
-        """
-        esc_skill = re.escape(skill.lower())
-        if skill.lower() in ["c++", "c#", ".net"]:
-            return skill.lower() in text
-        pattern = rf"(?:^|[^a-zA-Z0-9]){esc_skill}(?:$|[^a-zA-Z0-9])"
-        return bool(re.search(pattern, text))
+        return "de" if de_score > en_score else "en"
+
+    def _has_skill(self, text: str, skill_entry: Union[str, Dict[str, str]]) -> bool:
+        """Matches skill allowing for string or dict {en, de} structure."""
+        text_lower = text.lower()
+
+        if isinstance(skill_entry, dict):
+            candidates = [str(v).lower() for v in skill_entry.values()]
+        else:
+            candidates = [str(skill_entry).lower()]
+
+        for cand in candidates:
+            esc_cand = re.escape(cand)
+            if cand in ["c++", "c#", ".net"]:
+                if cand in text_lower:
+                    return True
+                continue
+            pattern = rf"(?:^|[^a-zA-Z0-9]){esc_cand}(?:$|[^a-zA-Z0-9])"
+            if re.search(pattern, text_lower):
+                return True
+        return False
 
     def _enrich_job_data(self, job: Dict[str, Any]) -> None:
-        """Analyzes text and populates skill/score fields."""
-        components = [
-            job.get("title", ""),
-            job.get("company", ""),
-            job.get("description", ""),
-            job.get("location", ""),
-        ]
-        text = " ".join(components).lower()
+        """Analyzes text and populates skill/score fields with bilingual support."""
+        desc = job.get("description", "")
 
-        found_mine = [s.title() for s in self.MY_SKILLS_SET if self._has_skill(text, s)]
-        job["matching_skills"] = ", ".join(found_mine[:15])
+        # Isolated scoring text - EXCLUDE search_criteria for consistency
+        scoring_components = [job.get("title", ""), job.get("company", ""), desc, job.get("location", "")]
+        text_to_score = " ".join([str(c) for c in scoring_components]).lower()
 
-        found_global = {s.lower() for s in self.global_skills if self._has_skill(text, s)}
-        missing = list(found_global - self.MY_SKILLS_SET)
-        job["missing_skills"] = ", ".join([s.title() for s in missing[:10]])
+        lang = self._detect_language(text_to_score)
+        job["detected_languages"] = "German" if lang == "de" else "English"
 
-        langs = []
-        if any(kw in text for kw in ["german", "deutsch"]):
-            langs.append("German")
-        if "english" in text:
-            langs.append("English")
-        job["detected_languages"] = ", ".join(langs)
+        found_mine = []
+        for cat in ["programming", "testing", "embedded", "ai_ml", "ai_tools"]:
+            skills = self.profile.get("skills", {}).get(cat, [])
+            for s in skills:
+                if self._has_skill(text_to_score, s):
+                    label = s["en"] if isinstance(s, dict) else s
+                    found_mine.append(label.title())
 
-        role_kw = self.profile.get("skills", {}).get("roles", [])
-        job["matched_roles"] = ", ".join([r for r in role_kw if r.lower() in text])
+        job["matching_skills"] = ", ".join(sorted(set(found_mine))[:15])
+
+        role_entries = self.profile.get("skills", {}).get("roles", [])
+        matched_roles_list = []
+        for r in role_entries:
+            if self._has_skill(text_to_score, r):
+                label = r["en"] if isinstance(r, dict) else r
+                matched_roles_list.append(label)
+        job["matched_roles"] = ", ".join(sorted(set(matched_roles_list)))
+
+        found_global = set()
+        for cat_list in self.global_skills_raw.values():
+            for s in cat_list:
+                if self._has_skill(text_to_score, s):
+                    label = s["en"] if isinstance(s, dict) else s
+                    found_global.add(label.title())
+
+        missing = [s for s in found_global if s not in found_mine]
+        job["missing_skills"] = ", ".join(missing[:10])
 
         if not job.get("salary_hint"):
-            pattern = r"([€$]\s?\d{2,3}[kK])|(\d{2,3}[.,]\d{3}\s?[€$]|EUR)"
-            sal = re.search(pattern, job.get("description", ""))
-            job["salary_hint"] = sal.group(0) if sal else ""
+            sal_pattern = (
+                r"(?:Salary|Gehalt|Stundensatz|Vergütung):?\s*([€$]\s?\d{2,3}[kK]|\d{2,3}[.,]\d{3}\s?[€$]|EUR)"
+            )
+            sal = re.search(sal_pattern, desc, re.IGNORECASE)
+            job["salary_hint"] = sal.group(1) if sal else ""
 
-        self._calculate_relevance_score(job, text)
+        # Default fallback for location type if not already extracted by provider
+        rem_kws = ["remote", "home office", "homeoffice", "ortsunabhängig", "telearbeit", "mobil", "100%"]
+        if any(kw in text_to_score for kw in rem_kws):
+            job["work_location_type"] = "Remote"
+        elif "hybrid" in text_to_score:
+            job["work_location_type"] = "Hybrid"
+
+        # ALWAYS calculate from scratch to avoid stale data from "Pending" state
+        self._calculate_relevance_score(job, text_to_score)
 
     def _calculate_relevance_score(self, job: Dict[str, Any], text: str) -> None:
-        """Calculates final matching percentage."""
+        """Calculates relevance score using dynamic category scaling."""
         score, max_score = 0, 0
         weights = self.config.get("scoring_weights", {})
-        mapping = [
-            ("programming_languages", 3, "programming"),
-            ("testing_skills", 4, "testing"),
-            ("embedded_firmware", 3, "embedded"),
-            ("ai_ml_skills", 3, "ai_ml"),
-        ]
-        skills_data = self.profile.get("skills", {})
-        for c, m, p in mapping:
-            w = weights.get(c, 0)
-            skills = skills_data.get(p, [])
-            matches = sum(1 for s in skills if self._has_skill(text, s))
-            max_score += w
-            score += min(w, matches * m)
+        if not weights:
+            weights = {
+                "programming_languages": 20,
+                "testing_skills": 20,
+                "embedded_firmware": 15,
+                "ai_ml_skills": 20,
+                "known_companies": 10,
+                "seniority_level": 15,
+            }
 
-        cw, sw = weights.get("known_companies", 10), weights.get("seniority_level", 5)
+        categories = [
+            ("programming_languages", "programming"),
+            ("testing_skills", "testing"),
+            ("embedded_firmware", "embedded"),
+            ("ai_ml_skills", "ai_ml"),
+        ]
+
+        skills_profile = self.profile.get("skills", {})
+
+        for weight_key, profile_key in categories:
+            weight = weights.get(weight_key, 20)
+            skills = skills_profile.get(profile_key, [])
+
+            matches = sum(1 for s in skills if self._has_skill(text, s))
+
+            # Check if category is relevant to the job at all
+            is_category_mentioned = any(
+                self._has_skill(text, s) for s in self.global_skills_raw.get(f"{profile_key}_skills", [])
+            ) or any(self._has_skill(text, s) for s in self.global_skills_raw.get(profile_key, []))
+
+            if is_category_mentioned:
+                max_score += weight
+                score += min(weight, matches * 4)
+            else:
+                max_score += weight * 0.25
+
+        cw = weights.get("known_companies", 10)
+        sw = weights.get("seniority_level", 15)
+
         max_score += cw + sw
-        if any(c.lower() in job["company"].lower() for c in self.profile.get("known_companies", [])):
+
+        # Known companies bonus
+        if any(c.lower() in str(job.get("company", "")).lower() for c in self.profile.get("known_companies", [])):
             score += cw
 
-        matches = sum(1 for r in skills_data.get("roles", []) if r.lower() in text)
-        score += min(sw, matches * 3)
+        # Seniority / Roles bonus
+        role_matches = len(job.get("matched_roles", "").split(",")) if job.get("matched_roles") else 0
+        score += min(sw, role_matches * 5)
+
         job["relevance_score"] = int((score / max_score) * 100) if max_score > 0 else 0
 
     def _print_config_summary(self) -> None:
@@ -223,22 +318,15 @@ class JobSearchEngine:
             raise InvalidJSONContentError()
         return cast(Dict[str, Any], data)
 
-    def _load_global_skills(self, path: Path) -> Set[str]:
-        """Loads tech DB."""
-        with path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-            flat = set()
-            for c in data.values():
-                if isinstance(c, list):
-                    flat.update(c)
-            return flat
-
     def _init_skills_sets(self) -> None:
         """Initializes skills for matching."""
         self.CORE_SKILLS = self.profile.get("skills", {})
         self.MY_SKILLS_SET = set()
         for cat in ["programming", "testing", "embedded", "ai_ml", "ai_tools"]:
-            self.MY_SKILLS_SET.update([s.lower() for s in self.CORE_SKILLS.get(cat, [])])
+            skills = self.CORE_SKILLS.get(cat, [])
+            for s in skills:
+                val = s["en"].lower() if isinstance(s, dict) else s.lower()
+                self.MY_SKILLS_SET.add(val)
 
     def _init_session(self) -> None:
         """Inits HTTP session."""
@@ -280,14 +368,11 @@ class JobSearchEngine:
         """Generic provider runner with optimized individual location support."""
         provider_conf = self.config.get("active_providers", {}).get(provider_key, {})
         global_locs = self.config.get("search_parameters", {}).get("locations", ["Remote"])
-
-        # Priority: Provider-specific list > Global fallback
         target_locs = provider_conf.get("locations", global_locs)
 
         queries = self.config.get("search_queries", ["Software Engineer"])
         display_name = ProviderRegistry.get_display_name(provider_key)
         provider_instance = ProviderRegistry.get_provider_instance(provider_key, self.session)
-
         if not provider_instance:
             return
 
@@ -298,19 +383,15 @@ class JobSearchEngine:
 
         for q in queries:
             current_locs = target_locs if supports_location else ["All Locations"]
-
             for loc in current_locs:
                 success, attempts = False, 0
                 max_attempts = 1 if supports_location else self.MAX_RETRIES_PER_QUERY
-
                 while not success and attempts < max_attempts:
                     try:
                         if attempts > 0:
                             time.sleep(delay * 2)
-
-                        search_loc = loc if supports_location else (target_locs[0] if target_locs else "Default")
+                        search_loc = loc if supports_location else (target_locs if target_locs else "Default")
                         jobs = provider_instance.search(q, search_loc, limit)
-
                         if jobs:
                             with self.data_lock:
                                 self.jobs_data.extend(jobs)
@@ -321,11 +402,9 @@ class JobSearchEngine:
                         else:
                             print(f"   ✓ [{display_name}] 0 jobs (Q: {q} | L: {loc})")
                             success = True
-
                     except Exception as e:
                         print(f"   ⚠️ [{display_name}] Error: {e}")
                         attempts += 1
-
                 time.sleep(delay)
 
     def remove_duplicates(self) -> None:
@@ -341,33 +420,45 @@ class JobSearchEngine:
         print(f"🗑️ PHASE 2: DEDUPLICATION -> {len(self.jobs_data)} unique jobs")
 
     def fetch_full_descriptions(self) -> None:
-        """Executes Phase 3: Enrichment."""
-        if not self.config.get("search_parameters", {}).get("fetch_full_description", False):
+        """Executes Phase 3: Enrichment with session-based Selenium for Manual Mode."""
+        should_fetch = self.is_manual_mode or self.config.get("search_parameters", {}).get(
+            "fetch_full_description", False
+        )
+        if not should_fetch:
             return
-        print("\n" + "=" * 75 + f"\n📥 PHASE 3: ENRICHMENT ({self.MAX_WORKERS_ENRICH} workers)\n" + "=" * 75)
-        with ThreadPoolExecutor(max_workers=self.MAX_WORKERS_ENRICH) as executor:
-            futures = [
-                executor.submit(self._enrich_single_job, j, j.get("provider", "").lower()) for j in self.jobs_data
-            ]
-            for completed, f in enumerate(as_completed(futures), 1):
-                f.result()
-                if completed % self.AUTOSAVE_INTERVAL == 0:
-                    self.save_raw_data(silent=True)
-                    self.autosave_filtered(silent=True)
+        workers = 1 if self.is_manual_mode else self.MAX_WORKERS_ENRICH
+        print(f"\n{'-' * 75}\n📥 PHASE 3: ENRICHMENT ({workers} workers)\n{'-' * 75}")
 
-    def _enrich_single_job(self, job: Dict[str, Any], provider_name: str) -> Dict[str, Any]:
-        """Fetches and enriches job data."""
-        try:
-            p_key = "freelance_de" if provider_name == "freelance_de" else provider_name
-            provider = ProviderRegistry.get_provider_instance(p_key, self.session)
-            if not provider:
-                provider = ProviderRegistry.get_provider_instance("linkedin", self.session)
-            if provider:
-                desc = provider.fetch_full_description(job["link"])
-                if desc and len(desc.strip()) > 0:
-                    job["description"] = desc
-        except Exception as e:
-            print(f"   ⚠️ Enrichment error: {e}")
+        if workers > 1:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = [executor.submit(self._enrich_single_job, j) for j in self.jobs_data]
+                for f in as_completed(futures):
+                    with contextlib.suppress(Exception):
+                        f.result()
+        else:
+            for job in self.jobs_data:
+                with contextlib.suppress(Exception):
+                    self._enrich_single_job(job)
+
+    def _enrich_single_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+        """Fetches and enriches job data with rich metadata support."""
+        if self.is_manual_mode:
+            print(f"   [FETCH] Processing: {job.get('link', '')[:60]}...")
+
+        provider_name = job.get("provider", "").lower()
+        provider = ProviderRegistry.get_provider_instance(provider_name, self.session)
+        if not provider:
+            provider = ProviderRegistry.get_provider_instance("linkedin", self.session)
+
+        if provider:
+            with contextlib.suppress(Exception):
+                raw_result = provider.fetch_full_description(job["link"])
+                if isinstance(raw_result, dict):
+                    job.update(raw_result)
+                else:
+                    job["description"] = raw_result
+
+        # RE-CALCULATE EVERYTHING AFTER METADATA UPDATE
         self._enrich_job_data(job)
         return job
 
@@ -398,21 +489,14 @@ class JobSearchEngine:
         ]
 
     def save_raw_data(self, silent: bool = True) -> None:
-        """Saves all raw results.
-
-        Args:
-            silent: Suppress print if True.
-        """
+        """Saves all raw results."""
         with self.data_lock:
             data_copy = list(self.jobs_data)
         if not data_copy:
             return
-
-        formats = self.config.get("output", {}).get("formats", ["csv"])
-
         if not silent:
             print("💾 Saving raw data...")
-
+        formats = self.config.get("output", {}).get("formats", ["csv"])
         if "csv" in formats:
             with (self.output_dir / "all_jobs_raw.csv").open("w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=self.get_csv_headers(), extrasaction="ignore")
@@ -423,28 +507,22 @@ class JobSearchEngine:
                 json.dump(data_copy, f, ensure_ascii=False, indent=2)
 
     def autosave_filtered(self, silent: bool = True) -> None:
-        """Saves filtered results.
-
-        Args:
-            silent: Suppress print if True.
-        """
+        """Saves filtered results."""
         with self.data_lock:
             data_copy = list(self.jobs_data)
         if not data_copy:
             return
-
-        min_s = self.config.get("filtering", {}).get("min_relevance_score", 0)
+        min_s = 0 if self.is_manual_mode else self.config.get("filtering", {}).get("min_relevance_score", 0)
         exclude = self.config.get("filtering", {}).get("exclude_keywords", [])
         filtered = [
             j
             for j in data_copy
-            if j.get("relevance_score", 0) >= min_s and not any(k.lower() in j["title"].lower() for k in exclude)
+            if j.get("relevance_score", 0) >= min_s
+            and not any(k.lower() in j.get("title", "").lower() for k in exclude)
         ]
         filtered.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
-
         if not silent:
             print(f"💾 Saving filtered results ({len(filtered)} jobs)...")
-
         base = self.config.get("output", {}).get("base_filename", "jobs")
         formats = self.config.get("output", {}).get("formats", ["csv"])
         if "csv" in formats and filtered:
@@ -464,8 +542,7 @@ class JobSearchEngine:
         with (self.output_dir / f"{base_name}.md").open("w", encoding="utf-8") as f:
             f.write(f"# Job Search Results ({now_str})\n\nTotal processed: {len(data)}\n\n")
             for i, j in enumerate(data, 1):
-                # E501 Fix: Split long string into multiple write calls
-                f.write(f"### {i}. {j['title']} (**{j['relevance_score']}%**)\n")
+                f.write(f"### {i}. {j.get('title', 'Unknown')} (**{j.get('relevance_score', 0)}%**)\n")
                 f.write(f"- **Provider:** {j.get('provider')} | **Location:** {j.get('location')}\n")
                 f.write(f"- **Matching Skills:** {j.get('matching_skills', 'None')}\n")
                 f.write(f"- **Link:** [View Posting]({j['link']})\n\n---\n")
@@ -474,22 +551,17 @@ class JobSearchEngine:
         """Final summary print."""
         with self.data_lock:
             data_copy = list(self.jobs_data)
-        min_s = self.config.get("filtering", {}).get("min_relevance_score", 0)
-        filtered = sorted(
-            [j for j in data_copy if j.get("relevance_score", 0) >= min_s],
-            key=lambda x: x.get("relevance_score", 0),
-            reverse=True,
-        )
+        filtered = sorted(data_copy, key=lambda x: x.get("relevance_score", 0), reverse=True)
         if not filtered:
             return
         print("\n⭐ TOP 5 RESULTS:")
         for i, j in enumerate(filtered[:5], 1):
-            # E501 Fix: Break print statement into multi-line f-string
-            print(
-                f"{i}. {j['title']} ({j['relevance_score']}%)\n"
+            msg = (
+                f"{i}. {j.get('title', 'Unknown')} ({j.get('relevance_score', 0)}%)\n"
                 f"   Posted: {j.get('posted_at_relative')}\n"
-                f"   {j['link']}\n"
+                f"   {j.get('link', 'N/A')}\n"
             )
+            print(msg)
 
 
-# End of src/core/engine.py (v. 00034)
+# End of src/core/engine.py (v. 00052)

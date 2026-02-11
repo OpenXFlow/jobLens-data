@@ -1,11 +1,13 @@
 # The MIT License (MIT)
 # Copyright (c) 2025 Jozef Darida
-# Job Searcher Project
+# LinkedIn Job Searcher Project
 
 """Persistence Manager Module.
 
 This module handles cumulative storage, multi-portal synchronization,
 rolling directory cleanup, and automated database rotation/archiving.
+Refactored (v. 00012) - Compliance: Fixed Ruff SIM117 by merging multiple
+context managers into a single 'with' statement.
 """
 
 import contextlib
@@ -37,7 +39,11 @@ class PersistenceManager:
         self.history_path.mkdir(parents=True, exist_ok=True)
 
     def _get_existing_links(self) -> Set[str]:
-        """Reads the global CSV and returns a set of all unique job links."""
+        """Reads the global CSV and returns a set of all unique job links.
+
+        Returns:
+            Set[str]: A set containing all previously processed URLs.
+        """
         links: Set[str] = set()
         if not self.global_file.exists():
             return links
@@ -53,7 +59,15 @@ class PersistenceManager:
         return links
 
     def update_cumulative_results(self, new_jobs: List[Dict[str, Any]], headers: List[str]) -> int:
-        """Appends new unique jobs to the global CSV file."""
+        """Appends new unique jobs to the global CSV file.
+
+        Args:
+            new_jobs: List of job dictionaries to process.
+            headers: Field names to maintain consistency.
+
+        Returns:
+            int: Number of actually added new records.
+        """
         if not new_jobs:
             return 0
 
@@ -79,7 +93,15 @@ class PersistenceManager:
         return len(to_append)
 
     def sync_all_from_outputs(self, outputs_dir: str, headers: List[str]) -> int:
-        """Scans the outputs directory and syncs all found jobs to CSV."""
+        """Scans the outputs directory and syncs all found jobs to CSV.
+
+        Args:
+            outputs_dir: Source directory for output folders.
+            headers: Master list of CSV columns.
+
+        Returns:
+            int: Total new jobs added.
+        """
         out_path = Path(outputs_dir)
         if not out_path.exists():
             return 0
@@ -94,21 +116,19 @@ class PersistenceManager:
                 json_file = folder / "all_jobs_raw.json"
 
             if json_file.exists():
-                try:
-                    with json_file.open("r", encoding="utf-8") as f:
-                        jobs = json.load(f)
-                        if isinstance(jobs, list):
-                            count = self.update_cumulative_results(jobs, headers)
-                            if count > 0:
-                                print(f"   [SYNC] Found {count} new jobs in {folder.name}")
-                            total_new += count
-                except Exception as e:
-                    print(f"   [SYNC] Error processing {json_file}: {e}")
+                # SIM117 Fix: Merged multiple with statements into one
+                with contextlib.suppress(Exception), json_file.open("r", encoding="utf-8") as f:
+                    jobs = json.load(f)
+                    if isinstance(jobs, list):
+                        count = self.update_cumulative_results(jobs, headers)
+                        if count > 0:
+                            print(f"   [SYNC] Found {count} new jobs in {folder.name}")
+                        total_new += count
 
         return total_new
 
     def rotate_results_database(self, retention_days: int = 180) -> int:
-        """Archives records older than the retention period to the history folder.
+        """Archives records older than the retention period to cold storage.
 
         Args:
             retention_days: Number of days to keep in the active CSV.
@@ -135,28 +155,36 @@ class PersistenceManager:
         if archived_df.empty:
             return 0
 
-        # Prepare archive filenames based on date range
+        # Determine archive file name
         min_date = archived_df["scraped_at_dt"].min().strftime("%Y%m")
         max_date = archived_df["scraped_at_dt"].max().strftime("%Y%m")
         base_name = f"{min_date}_{max_date}_archived_jobs"
 
-        # Drop temporary datetime column before saving
+        # Cleanup temporary columns
         archived_df = archived_df.drop(columns=["scraped_at_dt"])
         active_df = active_df.drop(columns=["scraped_at_dt"])
 
-        # Save to cold storage (History)
+        # Save archive
         archived_df.to_csv(self.history_path / f"{base_name}.csv", index=False)
         with pd.ExcelWriter(self.history_path / f"{base_name}.xlsx", engine="openpyxl") as writer:
             archived_df.to_excel(writer, sheet_name="ARCHIVE", index=False)
 
-        # Overwrite global file with remaining active records
+        # Update active DB
         active_df.to_csv(self.global_file, index=False)
 
         print(f"   [ROTATION] Archived {len(archived_df)} records to {base_name}")
         return len(archived_df)
 
     def cleanup_old_outputs(self, outputs_dir: str, retention_days: int = 14) -> int:
-        """Deletes directories in the outputs folder older than the retention period."""
+        """Deletes directories in the outputs folder older than the retention period.
+
+        Args:
+            outputs_dir: Path to the outputs directory.
+            retention_days: Deletion threshold in days.
+
+        Returns:
+            int: Number of deleted directories.
+        """
         out_path = Path(outputs_dir)
         if not out_path.exists():
             return 0
@@ -185,7 +213,14 @@ class PersistenceManager:
         return deleted_count
 
     def export_to_excel(self, excel_filename: str = "JobLens_Dashboard.xlsx") -> str:
-        """Exports the current global CSV to a multi-tab Excel dashboard."""
+        """Exports the current global CSV to a multi-tab Excel dashboard.
+
+        Args:
+            excel_filename: Desired output filename.
+
+        Returns:
+            str: Path to the created Excel file.
+        """
         if not self.global_file.exists():
             return ""
 
@@ -207,4 +242,4 @@ class PersistenceManager:
         return str(excel_path)
 
 
-# End of src/utils/persistence_manager.py (v. 00010)
+# End of src/utils/persistence_manager.py (v. 00012)

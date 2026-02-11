@@ -1,59 +1,88 @@
 {
   "roles_and_seniority": [
-    "Intern", "Internship", "Praktikant", "Werkstudent", "Trainee", "Junior", "Entry-level", "Graduate", "Associate",
-    "Mid-level", "Intermediate", "Medior",
-    "Senior", "Senior-level", "Staff", "Principal", "Distinguished", "Fellow",
-    "Lead", "Team Lead", "Tech Lead", "Technical Lead", "Engineering Manager", "Head of", "Director", "VP", "CTO", "CIO",
-    "Architect", "Solution Architect", "System Architect", "Enterprise Architect", "Cloud Architect", "Software Architect",
-    "Freelancer", "Contractor", "Consultant", "Specialist", "Expert", "Evangelist",
-    "Product Owner", "Scrum Master", "Agile Coach", "Project Manager"
+    {"en": "Intern", "de": "Praktikant"},
+    {"en": "Internship", "de": "Praktikum"},
+    {"en": "Working Student", "de": "Werkstudent"},
+    {"en": "Trainee", "de": "Auszubildender"},
+    {"en": "Junior", "de": "Junior"},
+    {"en": "Entry-level", "de": "Berufseinsteiger"},
+    {"en": "Graduate", "de": "Absolvent"},
+    {"en": "Associate", "de": "Mitarbeiter"},
+    {"en": "Mid-level", "de": "Berufserfahren"},
+    {"en": "Senior", "de": "Senior"},
+    {"en": "Staff", "de": "Staff"},
+    {"en": "Principal", "de": "Principal"},
+    {"en": "Expert", "de": "Experte"},
+    {"en": "Lead", "de": "Leitender"},
+    {"en": "Team Lead", "de": "Teamleiter"},
+    {"en": "Tech Lead", "de": "Technischer Leiter"},
+    {"en": "Engineering Manager", "de": "Leiter Engineering"},
+    {"en": "Head of", "de": "Abteilungsleiter"},
+    {"en": "Director", "de": "Direktor"},
+    {"en": "Architect", "de": "Architekt"},
+    {"en": "Solution Architect", "de": "Lösungsarchitekt"},
+    {"en": "System Architect", "de": "Systemarchitekt"},
+    {"en": "Freelancer", "de": "Freiberufler"},
+    {"en": "Contractor", "de": "Externer Mitarbeiter"},
+    {"en": "Consultant", "de": "Berater"},
+    {"en": "Product Owner", "de": "Produktverantwortlicher"},
+    {"en": "Scrum Master", "de": "Scrum Master"},
+    {"en": "Project Manager", "de": "Projektleiter"}
   ],
   "programming_languages": [
     "Python", "C", "C++", "C#", "Java", "JavaScript", "TypeScript", "Go", "Golang", "Rust", 
     "Swift", "Kotlin", "PHP", "Ruby", "Bash", "Shell", "PowerShell", "R", "Scala", "Dart",
-    "Perl", "Lua", "Groovy", "Objective-C", "Assembly", "ASM", "Matlab", "VHDL", "Verilog"
+    "Perl", "Lua", "Groovy", "Assembly", "ASM", "Matlab", "VHDL", "Verilog"
   ],
   "cloud_devops": [
     "AWS", "Amazon Web Services", "Azure", "GCP", "Google Cloud", "Docker", "Kubernetes", "K8s", 
-    "Terraform", "Ansible", "Puppet", "Chef", "Jenkins", "GitLab CI", "GitHub Actions", "CircleCI", "Bamboo",
-    "Prometheus", "Grafana", "Datadog", "Splunk", "ELK Stack", "Kibana", "Elasticsearch", "Logstash",
-    "Linux", "Unix", "Nginx", "Apache", "OpenShift", "Helm", "ArgoCD"
+    "Terraform", "Ansible", "Puppet", "Chef", "Jenkins", "GitLab CI", "GitHub Actions", "CircleCI",
+    "Prometheus", "Grafana", "Datadog", "Splunk", "ELK Stack", "Linux", "Unix", "OpenShift", "ArgoCD"
   ],
   "ai_ml_data": [
-    "Machine Learning", "Deep Learning", "NLP", "LLM", "Generative AI", "RAG", "Transformer", "BERT", "GPT",
-    "LangChain", "LlamaIndex", "Hugging Face", "PyTorch", "TensorFlow", "Keras", "JAX",
-    "Scikit-learn", "Pandas", "NumPy", "SciPy", "Matplotlib", "Seaborn",
-    "OpenCV", "Computer Vision", "YOLO",
-    "Databricks", "Snowflake", "Spark", "Apache Spark", "Hadoop", "Kafka", "Airflow", "MLOps", "Data Science"
+    {"en": "Machine Learning", "de": "Maschinelles Lernen"},
+    {"en": "Deep Learning", "de": "Deep Learning"},
+    "NLP", "LLM", "Generative AI", "RAG", "Transformer", "GPT", "LangChain", "LlamaIndex", 
+    "Hugging Face", "PyTorch", "TensorFlow", "Keras", "Scikit-learn", "Pandas", "NumPy",
+    "Computer Vision", "MLOps", "Data Science", "Databricks", "Snowflake", "Spark"
   ],
   "testing_qa": [
-    "Selenium", "Playwright", "Cypress", "Appium", "Pytest", "TestNG", "JUnit", "NUnit", "XUnit",
-    "Robot Framework", "Cucumber", "SpecFlow", "Gherkin", "BDD", "TDD",
-    "Postman", "RestAssured", "SoapUI", "JMeter", "LoadRunner", "Gatling", "K6",
-    "Manual Testing", "Regression Testing", "Performance Testing", "Load Testing", "Stress Testing",
+    {"en": "Manual Testing", "de": "Manuelles Testen"},
+    {"en": "Regression Testing", "de": "Regressionstest"},
+    {"en": "Performance Testing", "de": "Performancetest"},
+    {"en": "Load Testing", "de": "Lasttest"},
+    {"en": "Stress Testing", "de": "Stresstest"},
+    {"en": "Test Automation", "de": "Testautomatisierung"},
+    {"en": "Unit Testing", "de": "Unit-Testing"},
+    {"en": "Integration Testing", "de": "Integrationstest"},
+    {"en": "System Testing", "de": "Systemtest"},
+    "Selenium", "Playwright", "Cypress", "Appium", "Pytest", "TestNG", "JUnit", "NUnit",
+    "Robot Framework", "Cucumber", "BDD", "TDD", "Postman", "RestAssured",
     "HIL", "SIL", "MIL", "Hardware-in-Loop"
   ],
   "web_backend": [
-    "Django", "Flask", "FastAPI", "Spring Boot", "Spring", "Hibernate", 
-    "Node.js", "Express", "NestJS", 
-    "React", "Angular", "Vue.js", "Next.js", "Nuxt.js", "Svelte", "Tailwind", "Bootstrap",
-    "GraphQL", "REST API", "gRPC", "Microservices", "Serverless", "ASP.NET", ".NET Core"
+    "Django", "Flask", "FastAPI", "Spring Boot", "Hibernate", "Node.js", "Express", "NestJS", 
+    "React", "Angular", "Vue.js", "GraphQL", "REST API", "gRPC", "Microservices", "Serverless"
   ],
   "databases": [
-    "SQL", "PostgreSQL", "MySQL", "MariaDB", "Oracle", "SQL Server", "MSSQL",
-    "NoSQL", "MongoDB", "Redis", "Cassandra", "DynamoDB", "CosmosDB",
-    "Vector Database", "Pinecone", "Weaviate", "Milvus", "ChromaDB"
+    "SQL", "PostgreSQL", "MySQL", "MariaDB", "Oracle", "SQL Server", "NoSQL", "MongoDB", 
+    "Redis", "Cassandra", "Vector Database", "Pinecone", "ChromaDB"
   ],
   "embedded_hardware": [
-    "Embedded Systems", "Firmware", "RTOS", "FreeRTOS", "Zephyr", "QNX", "VxWorks",
-    "Microcontroller", "STM32", "ESP32", "Arduino", "Raspberry Pi", "Nordic", "NXP", "Infineon",
-    "ARM", "Cortex-M", "RISC-V", "DSP", "FPGA", "SoC",
-    "CAN", "CANoe", "CANalyzer", "SPI", "I2C", "UART", "USB", "Ethernet", "Automotive Ethernet",
-    "AUTOSAR", "ISO 26262", "ASPICE", "Misra C", "SystemC", "Altium", "KiCad"
+    {"en": "Embedded Systems", "de": "Eingebettete Systeme"},
+    {"en": "Firmware", "de": "Firmware"},
+    {"en": "Microcontroller", "de": "Mikrocontroller"},
+    {"en": "Driver Development", "de": "Treiberentwicklung"},
+    "RTOS", "FreeRTOS", "Zephyr", "QNX", "VxWorks", "STM32", "ESP32", "Arduino", 
+    "ARM", "RISC-V", "DSP", "FPGA", "SoC", "CAN", "CANoe", "SPI", "I2C", "UART",
+    "AUTOSAR", "ISO 26262", "ASPICE", "Misra C"
   ],
   "tools_and_methods": [
-    "Git", "GitHub", "GitLab", "Bitbucket", "Jira", "Confluence", "Trello", "Asana",
-    "Scrum", "Agile", "Kanban", "Waterfall", "SAFe", "DevOps", "CI/CD",
-    "Visual Studio Code", "IntelliJ", "PyCharm", "Eclipse", "Visual Studio"
+    "Git", "GitHub", "GitLab", "Jira", "Confluence", "Trello", "Asana",
+    {"en": "Agile", "de": "Agile Methoden"},
+    {"en": "Scrum", "de": "Scrum"},
+    {"en": "Kanban", "de": "Kanban"},
+    {"en": "Waterfall", "de": "Wasserfall-Modell"},
+    "SAFe", "DevOps", "CI/CD", "Visual Studio Code", "PyCharm", "IntelliJ"
   ]
 }

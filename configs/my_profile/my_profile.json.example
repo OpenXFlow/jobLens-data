@@ -1,10 +1,10 @@
 {
   "personal_info": {
     "name": "Your Full Name",
-    "title": "Your Professional Title (e.g., Senior Software Engineer)",
+    "title": "Your Professional Title (e.g., Principal QA Engineer)",
     "education": "Your Degree (e.g., Dipl. Ing.)",
     "location": "City, Country",
-    "languages": ["English", "German"],
+    "languages": ["English", "German", "Other"],
     "github": "https://github.com/your-username",
     "linkedin": "https://www.linkedin.com/in/your-profile"
   },
@@ -14,31 +14,41 @@
   },
   "skills": {
     "roles": [
-      "Senior",
-      "Lead",
-      "Principal",
-      "Architect",
-      "Expert",
-      "Freelancer",
-      "Consultant"
+      {"en": "Senior", "de": "Senior"},
+      {"en": "Lead", "de": "Leitender"},
+      {"en": "Principal", "de": "Principal"},
+      {"en": "Architect", "de": "Architekt"},
+      {"en": "Expert", "de": "Experte"},
+      {"en": "Freelancer", "de": "Freiberufler"},
+      {"en": "Test Manager", "de": "Testmanager"},
+      {"en": "QA Lead", "de": "QA-Leiter"}
     ],
     "programming": [
       "Python", "C", "C++", "Rust", "Go", "Java", "Bash"
     ],
     "testing": [
-      "Pytest", "Unit Testing", "Integration Testing", "System Testing",
-      "Test Automation", "HIL", "SIL", "CI/CD", "Robot Framework", "Selenium"
+      {"en": "Test Automation", "de": "Testautomatisierung"},
+      {"en": "Unit Testing", "de": "Unit-Testing"},
+      {"en": "Integration Testing", "de": "Integrationstest"},
+      {"en": "System Testing", "de": "Systemtest"},
+      "Pytest", "HIL", "SIL", "Hardware-in-Loop", "Jenkins", "CI/CD"
     ],
     "embedded": [
-      "ARM", "Cortex-M", "DSP", "Firmware", "Embedded Systems", "RTOS",
-      "Microcontroller", "Driver Development", "CAN", "SPI", "I2C"
+      "ARM", "Cortex-M", "DSP",
+      {"en": "Firmware", "de": "Firmware"},
+      {"en": "Embedded Systems", "de": "Eingebettete Systeme"},
+      {"en": "Microcontroller", "de": "Mikrocontroller"},
+      "RTOS", "CAN", "SPI", "I2C"
     ],
     "domains": [
-      "Automotive", "Semiconductors", "IoT", "Telecommunications"
+      {"en": "Automotive", "de": "Automobilindustrie"},
+      {"en": "Semiconductors", "de": "Halbleiter"},
+      "IoT", "Telecommunications", "Payment Systems"
     ],
     "ai_ml": [
-      "LLM", "RAG", "Generative AI", "Prompt Engineering",
-      "LangChain", "LlamaIndex", "NLP"
+      "LLM", "RAG", "Generative AI", 
+      {"en": "Prompt Engineering", "de": "Prompt-Engineering"},
+      "LangChain", "AI Agents"
     ],
     "ai_tools": [
       "ChatGPT", "Claude", "Cursor", "GitHub Copilot"
@@ -50,19 +60,23 @@
       "TCP/IP", "MQTT", "REST API", "gRPC"
     ],
     "methodologies": [
-      "Agile", "Scrum", "TDD", "BDD"
+      {"en": "Agile", "de": "Agile"},
+      {"en": "Scrum", "de": "Scrum"},
+      {"en": "SAFe", "de": "SAFe"},
+      {"en": "V-Model", "de": "V-Modell"},
+      {"en": "TDD", "de": "Testgetriebene Entwicklung"}
     ]
   },
   "open_source_projects": [
     {
       "name": "Project Name",
-      "description": "Brief description of the tool or platform",
-      "technologies": ["Python", "API", "Library"]
+      "description": "Short summary of the project",
+      "technologies": ["Python", "Library", "API"]
     }
   ],
   "known_companies": [
-    "Example Company A",
-    "Example Company B"
+    "Target Company A",
+    "Target Company B"
   ],
   "preferences": {
     "work_location_preference": ["Remote", "Hybrid"],
