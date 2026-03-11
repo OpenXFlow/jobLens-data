@@ -6,7 +6,7 @@
 4.  **Stealth Dominance:** The inclusion of `selenium_factory.py` indicates a specialized focus on bypassing enterprise-grade bot protections in the cloud.
 
 
-
+```text
 jobLens/
 ├── .github/
 │   └── workflows/
@@ -55,4 +55,4 @@ jobLens/
 ├── README.md                         # Documentation: Main project guide 
 ├── setup.py                          # Build: Compatibility shim for pip installation
 └── sync_results.py                   # Maintenance: Standalone data lifecycle manager
-
+```
